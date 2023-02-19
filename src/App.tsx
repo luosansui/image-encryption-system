@@ -1,5 +1,8 @@
-function App() {
-  return <h1 className="text-3xl font-bold underline">Hello world!</h1>;
+import { Fragment } from "react";
+import { useRoutes } from "react-router-dom";
+import Layout from "./components/Layout";
+import routes from "./routes";
+export default function App() {
+  const element = useRoutes(routes);
+  return <Layout>{element}</Layout>;
 }
-
-export default App;
