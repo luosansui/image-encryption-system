@@ -1,5 +1,10 @@
+import Upload from "@/components/Upload";
 import React from "react";
 
 export default function Encryption() {
-  return <div>Encryption</div>;
+  return (
+    <div>
+      <Upload></Upload>
+    </div>
+  );
 }
