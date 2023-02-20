@@ -23,9 +23,9 @@ const MenuNavLink: React.FC<{ route: CustomRouteObject; zIndex?: number }> = ({
         end
         to={route.path as string}
         className={({ isActive }) =>
-          `flex items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900 ${
+          `flex items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-gray-900 rounded-md ${
             hasChildren ? "cursor-pointer" : ""
-          } ${isActive ? "bg-white rounded-md shadow" : ""}`
+          } ${isActive ? "!bg-white shadow-md" : ""}`
         }
       >
         <span className={`inline-block ml-${4 * zIndex} mr-2`}>
@@ -70,7 +70,7 @@ const Sidebar: React.FC = () => {
       className="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
       aria-label="Sidebar"
     >
-      <div className="h-full px-3 py-4 overflow-y-auto bg-gray-50">
+      <div className="h-full px-3 py-4 overflow-y-auto bg-gray-100">
         <ul className="space-y-1">
           {routes?.map(
             (route, index) =>

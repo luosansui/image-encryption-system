@@ -16,13 +16,6 @@ const routes: CustomRouteObject[] = [
     name: "图像隐写",
     path: "/steganography",
     element: <Steganography />,
-    children: [
-      {
-        name: "图像隐写3123",
-        path: "/steganography/45646",
-        element: <Steganography />,
-      },
-    ],
   },
   {
     path: "*",
