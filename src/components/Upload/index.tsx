@@ -1,11 +1,39 @@
-import React, { useState } from "react";
+import { calculateMD5 } from "@/utils/module/file";
+import React, { useRef, useState } from "react";
 import Dropzone from "react-dropzone";
+import pLimit from "p-limit";
+
+export type FileWithMD5 = {
+  file: File;
+  md5: string;
+};
 
 const MultiImageUpload: React.FC = () => {
   const [files, setFiles] = useState<File[]>([]);
+  const fileHashSet = useRef<Set<string>>(new Set());
+  /**
+   * 过滤重复文件
+   * @param files 文件列表
+   * @returns 不重复的文件列表
+   */
+  async function filterDuplicateFiles(files: File[]) {
+    const limit = pLimit(3);
+    const uniqueFiles: File[] = [];
+    await Promise.all(
+      files.map(async (file) => {
+        const md5 = await limit(() => calculateMD5(file));
+        if (!fileHashSet.current.has(md5)) {
+          fileHashSet.current.add(md5);
+          uniqueFiles.push(file);
+        }
+      })
+    );
+    return uniqueFiles;
+  }
 
-  const handleDrop = (acceptedFiles: File[]) => {
-    setFiles((prevState) => [...prevState, ...acceptedFiles]);
+  const handleDrop = async (acceptedFiles: File[]) => {
+    const newFiles = await filterDuplicateFiles(acceptedFiles);
+    setFiles((prevState) => [...prevState, ...newFiles]);
   };
 
   const handleRemove = (file: File) => {
