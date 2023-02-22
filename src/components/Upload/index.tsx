@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Dropzone from "react-dropzone";
 import pLimit from "p-limit";
 import { produce } from "immer";
-import { FileType } from "@/type/file";
+import { FileType } from "@/components/Upload/type";
 
 const Upload: React.FC<{
   onChange?: (files: FileType[]) => void;

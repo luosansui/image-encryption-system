@@ -1,28 +1,17 @@
-import React, { ReactNode } from "react";
-
-interface TableColumn {
-  header: string;
-  accessor: string;
-  render?: (data: any) => ReactNode;
-}
-
-interface TableProps {
-  columns: TableColumn[];
-  data: any[];
-}
+import { TableProps } from "./type";
 
 function Table({ columns, data }: TableProps) {
   return (
-    <table className="min-w-full divide-y divide-gray-200">
-      <thead className="bg-gray-50">
+    <table className="w-full divide-y divide-gray-200 text-center">
+      <thead className="bg-gray-50 whitespace-nowrap">
         <tr>
           {columns.map((column) => (
             <th
-              key={column.accessor}
+              key={column.key}
               scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="px-6 py-3 text-sm text-gray-600 font-semibold uppercase tracking-wider"
             >
-              {column.header}
+              {column.title}
             </th>
           ))}
         </tr>
@@ -31,10 +20,8 @@ function Table({ columns, data }: TableProps) {
         {data.map((row) => (
           <tr key={row.id}>
             {columns.map((column) => (
-              <td key={column.accessor} className="px-6 py-4 whitespace-nowrap">
-                {column.render
-                  ? column.render(row[column.accessor])
-                  : row[column.accessor]}
+              <td key={column.key} className="px-6 py-4 whitespace-nowrap">
+                {row[column.key] ?? "-"}
               </td>
             ))}
           </tr>
