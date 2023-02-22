@@ -2,6 +2,7 @@ import ControlPanel from "@/components/ControlPanel";
 import Upload from "@/components/Upload";
 import { useState } from "react";
 import { FileType } from "@/type/file";
+import ProgressBar from "@/components/ProgressBar";
 
 export default function Encryption() {
   const [fileList, setFileList] = useState<FileType[]>([]);
@@ -23,8 +24,8 @@ export default function Encryption() {
         <div className="flex-1 p-2 mt-3 mb-3 border-2 border-gray-200 rounded-lg overflow-y-auto overflow-x-hidden">
           <Upload className="" onChange={handleFileListChange}></Upload>
         </div>
-        <div className="h-fit p-2 border-2 border-gray-200 shadow-sm rounded-lg">
-          进度条
+        <div className="p-2 border-2 border-gray-200 shadow-sm rounded-lg">
+          <ProgressBar progress={70} />
         </div>
       </div>
       {/* <div className="flex-1 h-fit  "> */}
