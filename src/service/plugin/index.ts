@@ -1,4 +1,3 @@
-import path from "path";
 import { Plugin, PluginModule } from "./type";
 
 class PluginService {
