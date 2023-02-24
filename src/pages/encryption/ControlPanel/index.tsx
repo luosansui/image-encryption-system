@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { loadDefaultPlugins, encrypt } from "@/service/image";
+import List from "@/components/List";
 export default function ControlPanel() {
   const [quality, setQuality] = useState(50);
   const [isEncrypting, setIsEncrypting] = useState(false);
@@ -16,13 +17,6 @@ export default function ControlPanel() {
   }, []);
   const handleStart = async () => {
     setIsEncrypting(true);
-    // TODO: start encryption
-    // await loadPlugin({
-    //   name: "algorithmA",
-    //   description: "图像加密算法A",
-    //   version: "1.0.0",
-    // });
-    // encrypt("algorithmA");
     encrypt("algorithmA");
   };
 
@@ -34,6 +28,9 @@ export default function ControlPanel() {
   return (
     <div className="h-full relative flex flex-col text-gray-600">
       <div className="flex-1 p-2">
+        {/* 算法列表 */}
+        <List options={["123", "3123", "31231"]}></List>
+        {/* 图像质量 */}
         <div className="flex items-center">
           <span className="mr-2">图像质量</span>
           <input

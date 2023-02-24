@@ -5,7 +5,6 @@ export type Plugin = {
   description: string;
   path: string;
   language: string;
-  // ...
 };
 //插件的具体实现
 export type PluginModule = {

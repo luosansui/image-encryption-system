@@ -1,6 +1,4 @@
-//引入image业务
-import * as image from "./image";
-//导出
-export default {
-  image,
-};
+//导出image业务
+export * as image from "./image";
+//导出plugin业务
+export * as plugin from "./plugin";
