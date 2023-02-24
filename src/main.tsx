@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import "flowbite";
@@ -8,7 +8,11 @@ import routes from "./routes";
 
 function App() {
   const element = useRoutes(routes);
-  return <Layout>{element}</Layout>;
+  return (
+    <Layout>
+      <Suspense>{element}</Suspense>
+    </Layout>
+  );
 }
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(

@@ -90,7 +90,7 @@ const Sidebar: React.FC = () => {
 
       <div
         id="drawer-navigation"
-        className="select-none fixed top-0 left-0 z-40 w-64 h-screen p-4 overflow-y-auto transition-transform -translate-x-full sm:translate-x-0 bg-gray-100 dark:bg-gray-800"
+        className="max-w-full select-none fixed top-0 left-0 z-40 w-64 h-screen p-4 overflow-y-auto transition-transform -translate-x-full sm:translate-x-0 bg-gray-100 dark:bg-gray-800"
         aria-labelledby="drawer-navigation-label"
       >
         <div className="flex justify-between items-center sm:hidden">
