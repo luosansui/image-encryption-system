@@ -16,7 +16,7 @@ export default function Encryption() {
   };
   return (
     <div className="flex h-full">
-      <div className="flex-1 flex flex-col">
+      <div className="min-w-[300px] flex-1 flex flex-col">
         <div className="flex-1 p-2 border-2 border-gray-200 rounded-lg">
           <div className="relative h-full w-full overflow-y-auto overflow-x-hidden">
             <Upload
@@ -34,7 +34,7 @@ export default function Encryption() {
           <ProgressBar progress={70} />
         </div>
       </div>
-      <div className="w-1/5 h-full min-w-fit ml-4 p-2 border-2 border-gray-200 rounded-lg">
+      <div className="min-w-[300px] h-full  ml-4 p-2 border-2 border-gray-200 rounded-lg">
         {/* 控制区 */}
         <ControlPanel />
       </div>

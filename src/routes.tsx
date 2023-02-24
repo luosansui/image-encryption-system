@@ -1,6 +1,7 @@
 import { Navigate, RouteObject } from "react-router-dom";
-import Encryption from "./pages/encryption";
-import Steganography from "./pages/steganography";
+import { lazy } from "react";
+const Encryption = lazy(() => import("./pages/encryption"));
+const Steganography = lazy(() => import("./pages/steganography"));
 
 export type CustomRouteObject = RouteObject & {
   name?: string;
