@@ -43,4 +43,4 @@ class PluginService {
     return plugin as T;
   }
 }
-export default new PluginService();
+export default PluginService;
