@@ -20,7 +20,10 @@ function Table({ columns, data }: TableProps) {
         {data.map((row) => (
           <tr key={row.id}>
             {columns.map((column) => (
-              <td key={column.key} className="px-6 py-4 whitespace-nowrap">
+              <td
+                key={column.key}
+                className="px-6 py-4 whitespace-nowrap text-center"
+              >
                 {row[column.key] ?? "-"}
               </td>
             ))}

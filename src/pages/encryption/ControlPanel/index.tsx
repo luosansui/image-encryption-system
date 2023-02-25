@@ -2,10 +2,18 @@ import { useEffect, useState } from "react";
 import { initPluginService, encrypt, getPlugins } from "@/service/image";
 import { Plugin } from "@/service/plugin/type";
 import List from "@/components/List";
+import { FileType } from "@/components/Upload/type";
 
-export default function ControlPanel() {
+export default function ControlPanel({
+  fileList,
+  handleGenerateResult,
+}: {
+  fileList: FileType[];
+  handleGenerateResult?: (files: [FileType, FileType]) => void;
+}) {
   const [quality, setQuality] = useState(50);
   const [isEncrypting, setIsEncrypting] = useState(false);
+  const [pluginName, setPluginName] = useState<string>("");
   const [pluginList, setPluginList] = useState<Plugin[]>([]);
 
   const handleQualityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -14,9 +22,13 @@ export default function ControlPanel() {
       setQuality(value);
     }
   };
+  //开始加密
   const handleStart = async () => {
     setIsEncrypting(true);
-    encrypt("algorithmA");
+    const resList = await encrypt(pluginName, fileList, "");
+    resList.forEach(async ([originalFile, encryptedFile]) => {
+      handleGenerateResult?.([originalFile, await encryptedFile]);
+    });
   };
 
   const handleCancel = () => {
@@ -31,10 +43,16 @@ export default function ControlPanel() {
         const plugins = getPlugins();
         console.log("plugins", plugins);
         setPluginList(plugins);
+        setPluginName(plugins[0]?.name);
       }
     });
     return destroyed;
   };
+  //选择算法插件改变
+  const handlePluginChange = (pluginName: string) => {
+    setPluginName(pluginName);
+  };
+
   //载入图片算法插件系统
   useEffect(() => initPlugin(), []);
 
@@ -44,7 +62,11 @@ export default function ControlPanel() {
         {/* 算法列表 */}
         <div className="flex items-center mb-4">
           <div className="mr-2">选择算法</div>
-          <List className="flex-1" options={pluginList}></List>
+          <List
+            options={pluginList}
+            onChange={handlePluginChange}
+            className="flex-1"
+          ></List>
         </div>
         {/* 图像质量 */}
         <div className="flex items-center">
@@ -65,7 +87,7 @@ export default function ControlPanel() {
           type="button"
           className="whitespace-nowrap text-white bg-blue-700 hover:bg-blue-800 shadow font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
           onClick={handleStart}
-          disabled={isEncrypting}
+          disabled={false}
         >
           开始
         </button>

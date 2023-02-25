@@ -1,5 +1,13 @@
+import { FileType } from "@/components/Upload/type";
 import PluginService from "@/service/plugin";
 import { Plugin } from "@/service/plugin/type";
+import {
+  calculateMD5,
+  file2PixelsBuffer,
+  pixelsBuffer2File,
+} from "@/utils/file";
+import { str2Num } from "@/utils/string";
+import { encryptFuncType } from "./type";
 
 type PluginJson = Omit<Plugin, "path"> & {
   default: Omit<Plugin, "path">;
@@ -25,7 +33,7 @@ export const initPluginService = () => {
         if (!isDestroyedExecute) {
           const plugin: Plugin = {
             ...pluginJson.default,
-            path: `${key}.js`,
+            path: key,
           };
           await loadOtherPlugin(plugin);
           res(null);
@@ -71,13 +79,74 @@ export const getPlugins = () => {
   }
   return pluginService.getPlugins();
 };
-//图像加密
-export const encrypt = (pluginName: string) => {
+//获取算法实例
+const getInstance = (pluginName: string) => {
   if (!pluginService) {
     throw new Error("插件服务未初始化");
   }
-  const pluginInstance = pluginService.getPluginInstance<{
-    encrypt: () => void;
+  if (!pluginName) {
+    throw new Error("未选择插件");
+  }
+  const { encrypt, decrypt } = pluginService.getPluginInstance<{
+    encrypt: encryptFuncType;
+    decrypt: encryptFuncType;
   }>(pluginName);
-  pluginInstance.encrypt();
+  if (!encrypt) {
+    throw new Error("插件未实现加密方法");
+  }
+  if (!decrypt) {
+    throw new Error("插件未实现解密方法");
+  }
+  return { encrypt, decrypt };
+};
+//图像加密
+export const encrypt = async (
+  pluginName: string,
+  files: FileType[],
+  secretKey: string
+) => {
+  //获取算法实例
+  const { encrypt } = getInstance(pluginName);
+  //加密
+  const pair = files.map<[FileType, Promise<FileType>]>((item) => [
+    item,
+    new Promise<FileType>(async (res) => {
+      const { buffer, width, height, name } = await file2PixelsBuffer(
+        item.file
+      );
+      const file = await pixelsBuffer2File(
+        {
+          buffer: encrypt(buffer, secretKey),
+          width,
+          height,
+          name,
+        },
+        "image/png"
+      );
+      const md5 = await calculateMD5(file);
+      res({
+        file,
+        md5,
+        src: URL.createObjectURL(file),
+      });
+    }),
+  ]);
+  return pair;
+};
+//图像解密
+export const decrypt = (
+  pluginName: string,
+  files: FileType[],
+  secretKey: string
+) => {
+  if (!pluginService) {
+    throw new Error("插件服务未初始化");
+  }
+  //TODO:缓存服务,已经解密过的文件不再解密
+  //TODO:多线程服务，多线程解密
+  const fileList = files.map((fileData) => fileData.file);
+  const pluginInstance = pluginService.getPluginInstance<{
+    decrypt: encryptFuncType;
+  }>(pluginName);
+  return [];
 };
