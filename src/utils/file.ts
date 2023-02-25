@@ -1,3 +1,4 @@
+import { PixelBuffer } from "@/service/image/type";
 import SparkMD5 from "spark-md5";
 
 export type ProgressCallback = (progress: number) => void;
@@ -63,4 +64,42 @@ export function calculateMD5(
 
     loadNext();
   });
+}
+/**
+ *
+ * @param file 任意格式的图像文件
+ * @returns 图像文件的ArrayBuffer像素数据
+ */
+export async function file2PixelsBuffer(file: File): Promise<PixelBuffer> {
+  const img = await createImageBitmap(file);
+  const canvas = new OffscreenCanvas(img.width, img.height);
+  const ctx = canvas.getContext("2d") as OffscreenCanvasRenderingContext2D;
+  ctx.drawImage(img, 0, 0);
+  const pixelData = ctx.getImageData(0, 0, img.width, img.height).data.buffer;
+  return {
+    name: file.name,
+    buffer: pixelData,
+    width: img.width,
+    height: img.height,
+  };
+}
+/**
+ *
+ * @param pixels 图像像素数据
+ * @param type 要生成图片的类型
+ * @returns 图像文件
+ */
+export async function pixelsBuffer2File(
+  pixelBuffer: PixelBuffer,
+  type: string
+): Promise<File> {
+  const { buffer, width, height, name } = pixelBuffer;
+  const imageData = new ImageData(new Uint8ClampedArray(buffer), width, height);
+  const offscreenCanvas = new OffscreenCanvas(width, height);
+  const ctx = offscreenCanvas.getContext(
+    "2d"
+  ) as OffscreenCanvasRenderingContext2D;
+  ctx.putImageData(imageData, 0, 0);
+  const blob = await (offscreenCanvas as any).convertToBlob({ type });
+  return new File([blob], name, { type: blob.type });
 }

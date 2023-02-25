@@ -11,8 +11,15 @@ class PluginService {
 
     const modulePath = plugin.path;
     const module = await import(/* @vite-ignore */ modulePath);
-
-    this.plugins.push(plugin);
+    //按合适的顺序插入插件
+    const index = this.plugins.findIndex(
+      (obj) => obj.name.localeCompare(plugin.name) > 0
+    );
+    if (index === -1) {
+      this.plugins.push(plugin);
+    } else {
+      this.plugins.splice(index, 0, plugin);
+    }
     this.loadedModules[plugin.name] = module;
   }
 
@@ -35,7 +42,7 @@ class PluginService {
       throw new Error(`Plugin ${pluginName} has not been loaded`);
     }
 
-    const plugin = module.default;
+    const plugin = module;
     if (!plugin) {
       throw new Error(`Invalid plugin ${pluginName}`);
     }

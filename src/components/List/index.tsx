@@ -3,7 +3,7 @@ import { Plugin } from "@/service/plugin/type";
 import { capitalizeFirstLetter } from "@/utils/string";
 interface SelectProps {
   options: Plugin[];
-  onChange?: (plugin: Plugin) => void;
+  onChange?: (pluginName: string) => void;
   className?: string;
 }
 
@@ -13,7 +13,7 @@ const Select: React.FC<SelectProps> = ({ options, className, onChange }) => {
 
   const handleOptionClick = (index: number) => {
     setSelectedOption(index);
-    onChange?.(options[index]);
+    onChange?.(options[index]?.name ?? "");
     setIsOpen(false);
   };
 
@@ -56,7 +56,7 @@ const Select: React.FC<SelectProps> = ({ options, className, onChange }) => {
           <ul className="pt-2">
             {options?.map((option, index) => (
               <li
-                key={index}
+                key={`${index}${option.name}}`}
                 className={`px-3 py-2 my-1 cursor-pointer select-none hover:bg-gray-100 ${
                   selectedOption === index ? "bg-gray-100 font-medium" : ""
                 }`}

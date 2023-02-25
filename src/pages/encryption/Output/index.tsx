@@ -1,37 +1,39 @@
 import Table from "@/components/Table";
 import { TableData } from "@/components/Table/type";
+import { FileType } from "@/components/Upload/type";
 import React, { Fragment } from "react";
 import { columns } from "./constant";
 
-export default function Output({ className }: { className?: string }) {
-  const data: TableData[] = [
-    {
-      id: "1",
-      origin: 123,
-      originSize: 123,
-      originResolution: 123,
-      current: 123,
-      currentSize: 123,
+export default function Output({
+  pairList,
+  className,
+}: {
+  pairList: [FileType, FileType][];
+  className?: string;
+}) {
+  const generateData = () =>
+    Array.from(pairList, ([originFile, encryptFile]) => ({
+      id: encryptFile.md5,
+      origin: (
+        <img
+          className="w-32 h-32 object-scale-down inline-block"
+          src={originFile.src}
+        />
+      ),
+      current: (
+        <img
+          className="w-32 h-32 object-scale-down inline-block"
+          src={encryptFile.src}
+        />
+      ),
       currentResolution: 123,
-      compressionRatio: 123,
       operate: 123,
-    },
-    {
-      id: "2",
-      origin: 534,
-      originSize: 34343,
-      originResolution: 12343,
-      current: 143423,
-      currentSize: 134323,
-      currentResolution: 134323,
-      compressionRatio: 1343423,
-      operate: 343123,
-    },
-  ];
+    }));
+
   return (
     <Fragment>
       <div className={`overflow-auto rounded-md ${className ?? ""}`}>
-        <Table columns={columns} data={data}></Table>
+        <Table columns={columns} data={generateData()}></Table>
       </div>
     </Fragment>
   );
