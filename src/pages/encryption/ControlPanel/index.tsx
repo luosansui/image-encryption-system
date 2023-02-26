@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { initPluginService, encrypt, getPlugins } from "@/service/image";
+import { initService, encrypt, getPlugins } from "@/service/image";
 import { Plugin } from "@/service/plugin/type";
 import List from "@/components/List";
 import { FileType } from "@/components/Upload/type";
@@ -23,10 +23,16 @@ export default function ControlPanel({
     }
   };
   //开始加密
-  const handleStart = async () => {
+  const handleStart = () => {
+    if (!fileList.length) {
+      return;
+    }
     setIsEncrypting(true);
-    const resList = await encrypt(pluginName, fileList, "");
+    //获取加密结果
+    const resList = encrypt(pluginName, fileList, "");
+    //处理加密结果
     resList.forEach(async ([originalFile, encryptedFile]) => {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       handleGenerateResult?.([originalFile, await encryptedFile]);
     });
   };
@@ -35,9 +41,9 @@ export default function ControlPanel({
     setIsEncrypting(false);
     // TODO: cancel encryption
   };
-  //初始化插件系统
+  //初始化服务
   const initPlugin = () => {
-    const { destroyed, result } = initPluginService();
+    const { destroyed, result } = initService();
     result.then((res) => {
       if (res) {
         const plugins = getPlugins();
@@ -87,15 +93,13 @@ export default function ControlPanel({
           type="button"
           className="whitespace-nowrap text-white bg-blue-700 hover:bg-blue-800 shadow font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
           onClick={handleStart}
-          disabled={false}
         >
-          开始
+          {isEncrypting ? "暂停" : "开始"}
         </button>
         <button
           type="button"
           className="whitespace-nowrap text-white bg-blue-700 hover:bg-blue-800 shadow font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
           onClick={handleCancel}
-          disabled={!isEncrypting}
         >
           取消
         </button>

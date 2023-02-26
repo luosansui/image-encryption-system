@@ -3,7 +3,7 @@ import { TableProps } from "./type";
 function Table({ columns, data }: TableProps) {
   return (
     <table className="w-full divide-y divide-gray-200 text-center">
-      <thead className="bg-gray-50 whitespace-nowrap">
+      <thead className="bg-gray-50 whitespace-nowrap sticky top-0">
         <tr>
           {columns.map((column) => (
             <th

@@ -1,24 +1,32 @@
 import { FileType } from "@/components/Upload/type";
 import PluginService from "@/service/plugin";
 import { Plugin } from "@/service/plugin/type";
+import { getThreadsNumber } from "@/utils";
 import {
   calculateMD5,
   file2PixelsBuffer,
   pixelsBuffer2File,
 } from "@/utils/file";
-import { str2Num } from "@/utils/string";
+import { twoThirds } from "@/utils/number";
+
+import { FileCache } from "../Cache";
+import WorkService from "../worker";
 import { encryptFuncType } from "./type";
 
 type PluginJson = Omit<Plugin, "path"> & {
   default: Omit<Plugin, "path">;
 };
-//插件实例
+//插件服务实例
 let pluginService: PluginService | undefined | null;
+//缓存服务实例
+let originFileCache: FileCache | undefined | null;
 //初始化插件系统
-export const initPluginService = () => {
+export const initService = () => {
   console.log("实例化插件服务");
   pluginService = new PluginService();
-  //当前载入的插件是否被销毁
+  console.log("实例化缓存服务");
+  originFileCache = new FileCache();
+  //销毁函数是否执行
   let isDestroyedExecute = false;
   const modules = import.meta.glob("@/plugins/**");
   const modulesKeySet = new Set(
@@ -56,6 +64,8 @@ export const initPluginService = () => {
       isDestroyedExecute = true;
       pluginService = null;
       console.log("销毁插件服务");
+      originFileCache = null;
+      console.log("销毁缓存服务");
     },
   };
 };
@@ -100,35 +110,48 @@ const getInstance = (pluginName: string) => {
   return { encrypt, decrypt };
 };
 //图像加密
-export const encrypt = async (
+export const encrypt = (
   pluginName: string,
   files: FileType[],
   secretKey: string
 ) => {
   //获取算法实例
   const { encrypt } = getInstance(pluginName);
+  //缓存服务,已经解密过的文件不再解密
+  if (!originFileCache) {
+    throw new Error("缓存服务未初始化");
+  }
+  //未处理的文件列表
+  const unprocessedFiles = files.filter((item) => !originFileCache?.has(item));
+  //TODO:多线程服务，多线程解密
+  const threadNum = getThreadsNumber(unprocessedFiles.length) || 1;
+  const worker = new WorkService(threadNum, encrypt);
   //加密
-  const pair = files.map<[FileType, Promise<FileType>]>((item) => [
-    item,
+  const pair = unprocessedFiles.map<[FileType, Promise<FileType>]>((origin) => [
+    origin,
     new Promise<FileType>(async (res) => {
       const { buffer, width, height, name } = await file2PixelsBuffer(
-        item.file
+        origin.file
       );
       const file = await pixelsBuffer2File(
         {
-          buffer: encrypt(buffer, secretKey),
+          buffer: await worker.run<ArrayBuffer>(buffer, secretKey),
           width,
           height,
           name,
         },
         "image/png"
       );
-      const md5 = await calculateMD5(file);
-      res({
+      //已加密的文件
+      const resultFile = {
         file,
-        md5,
+        md5: await calculateMD5(file),
         src: URL.createObjectURL(file),
-      });
+      };
+      //原图计入缓存
+      originFileCache?.add(origin);
+      //返回加密后的文件
+      res(resultFile);
     }),
   ]);
   return pair;
@@ -142,8 +165,6 @@ export const decrypt = (
   if (!pluginService) {
     throw new Error("插件服务未初始化");
   }
-  //TODO:缓存服务,已经解密过的文件不再解密
-  //TODO:多线程服务，多线程解密
   const fileList = files.map((fileData) => fileData.file);
   const pluginInstance = pluginService.getPluginInstance<{
     decrypt: encryptFuncType;

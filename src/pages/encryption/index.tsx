@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { produce } from "immer";
 import ControlPanel from "@/pages/encryption/ControlPanel";
 import Upload from "@/components/Upload";
@@ -27,6 +27,16 @@ export default function Encryption() {
       })
     );
   };
+  /**
+   * 当前进度
+   */
+  const progress = useMemo(() => {
+    return filePair.length / fileList.length;
+  }, [filePair.length, fileList.length]);
+  /**
+   * 进度条是否显示
+   */
+  const isProgressShow = useMemo(() => progress > 0, [progress]);
   return (
     <div className="flex h-full">
       <div className="min-w-[300px] flex-1 flex flex-col">
@@ -38,7 +48,7 @@ export default function Encryption() {
             ></Upload>
           </div>
         </div>
-        <div className="flex-1 p-2 mt-3 mb-3 border-2 border-gray-200 rounded-lg overflow-y-auto overflow-x-hidden">
+        <div className="flex-1 p-2 mt-3 border-2 border-gray-200 rounded-lg overflow-y-auto overflow-x-hidden">
           <div className="relative h-full w-full overflow-y-auto overflow-x-hidden">
             <OutPut
               pairList={filePair}
@@ -46,8 +56,12 @@ export default function Encryption() {
             />
           </div>
         </div>
-        <div className="p-2 border-2 border-gray-200 shadow-sm rounded-lg">
-          <ProgressBar progress={70} />
+        <div
+          className={`p-2 mt-3 border-2 border-gray-200 shadow-sm rounded-lg ${
+            isProgressShow ? "" : "hidden"
+          }`}
+        >
+          <ProgressBar progress={progress} />
         </div>
       </div>
       <div className="min-w-[300px] h-full  ml-4 p-2 border-2 border-gray-200 rounded-lg">
