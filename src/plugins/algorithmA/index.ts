@@ -1,17 +1,17 @@
-import { str2Num } from "@/utils/string";
-
 type encryptFuncType = (data: ArrayBuffer, key: string) => ArrayBuffer;
 type decryptFuncType = encryptFuncType;
 
-// 混沌初始化，生成随机数种子
-const initChaos = (seed: number) => {
-  const x = seed;
-  const y = seed * seed;
-  const z = seed * seed * seed;
-  return [x, y, z];
-};
-
 const encrypt: encryptFuncType = (pixelData, secretKey) => {
+  const str2Num = (str: string): number => {
+    return 54544564646;
+  };
+  // 混沌初始化，生成随机数种子
+  const initChaos = (seed: number) => {
+    const x = seed;
+    const y = seed * seed;
+    const z = seed * seed * seed;
+    return [x, y, z];
+  };
   const dataLength = pixelData.byteLength;
   const pixelBuffer = new Uint8Array(pixelData);
   const tempBuffer = new Uint8Array(dataLength);
