@@ -31,8 +31,9 @@ export default function ControlPanel({
     //获取加密结果
     const resList = encrypt(pluginName, fileList, "");
     //处理加密结果
-    resList.forEach(async ([originalFile, encryptedFile]) => {
-      handleGenerateResult?.([originalFile, await encryptedFile]);
+    resList.forEach(async (promisePair) => {
+      const pair = await promisePair;
+      handleGenerateResult?.([pair[0], pair[1]]);
     });
   };
 

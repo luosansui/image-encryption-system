@@ -2,16 +2,11 @@ import { FileType } from "@/components/Upload/type";
 import PluginService from "@/service/plugin";
 import { Plugin } from "@/service/plugin/type";
 import { getThreadsNumber } from "@/utils";
-import {
-  calculateMD5,
-  file2PixelsBuffer,
-  pixelsBuffer2File,
-} from "@/utils/file";
-import { twoThirds } from "@/utils/number";
 
 import { FileCache } from "../Cache";
 import WorkService from "../worker";
 import { encryptFuncType } from "./type";
+import WorkerThread from "./worker?worker";
 
 type PluginJson = Omit<Plugin, "path"> & {
   default: Omit<Plugin, "path">;
@@ -123,38 +118,26 @@ export const encrypt = (
   }
   //未处理的文件列表
   const unprocessedFiles = files.filter((item) => !originFileCache?.has(item));
-  //TODO:多线程服务，多线程解密
+  //获取较优线程数
   const threadNum = getThreadsNumber(unprocessedFiles.length) || 1;
-  const worker = new WorkService(threadNum, encrypt);
+  //开启多线程服务
+  const worker = new WorkService(threadNum, encrypt, WorkerThread);
   //加密
-  const pair = unprocessedFiles.map<[FileType, Promise<FileType>]>((origin) => [
-    origin,
-    new Promise<FileType>(async (res) => {
-      const { buffer, width, height, name } = await file2PixelsBuffer(
-        origin.file
-      );
-      const file = await pixelsBuffer2File(
-        {
-          buffer: await worker.run<ArrayBuffer>(buffer, secretKey),
-          width,
-          height,
-          name,
-        },
-        "image/png"
-      );
-      //已加密的文件
-      const resultFile = {
-        file,
-        md5: await calculateMD5(file),
-        src: URL.createObjectURL(file),
-      };
-      //原图计入缓存
-      originFileCache?.add(origin);
-      //返回加密后的文件
-      res(resultFile);
-    }),
-  ]);
-  return pair;
+  const promisePair = unprocessedFiles.map(async (origin) => {
+    const fileWithOutSrc = await worker.run<FileType>(
+      origin,
+      secretKey,
+      "image/png"
+    );
+    const newFile = {
+      ...fileWithOutSrc,
+      src: URL.createObjectURL(fileWithOutSrc.file),
+    };
+    //原图计入缓存
+    originFileCache?.add(origin);
+    return [origin, newFile];
+  });
+  return promisePair;
 };
 //图像解密
 export const decrypt = (

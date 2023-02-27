@@ -1,4 +1,4 @@
-// 缓存函数
+//缓存函数;
 let cachedFunction = null;
 
 function deserializeFunction(buffer) {
@@ -21,3 +21,4 @@ self.addEventListener("message", (event) => {
     }
   }
 });
+export {};

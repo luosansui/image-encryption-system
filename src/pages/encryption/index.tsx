@@ -20,7 +20,6 @@ export default function Encryption() {
    * 处理生成结果
    */
   const handleGenerateResult = ([origin, encrypt]: [FileType, FileType]) => {
-    console.log("file", origin, encrypt);
     setFilePair(
       produce((draft) => {
         draft.push([origin, encrypt]);
