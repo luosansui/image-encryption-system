@@ -11,42 +11,63 @@ export default class WorkService {
     this.maxWorkers = maxWorkers;
     this.workerFunction = serializeFunction(workerFunction);
   }
-
+  /**
+   * 执行任务
+   * @param taskArgs 任务参数
+   * @returns 任务结果
+   */
   public run<T>(...taskArgs: any[]): Promise<T> {
     return new Promise(async (resolve, reject) => {
       const task: Task = { args: taskArgs, resolve, reject };
       this.taskQueue.push(task);
-      //保证所有任务先入队列再执行
-      await Promise.resolve(0);
+      await Promise.resolve(0); //保证所有任务先入队列再执行
       this.tryStartTask();
     });
   }
-
+  /**
+   * 设置worker的工作函数
+   * @param workerFunction 传入的函数
+   */
+  public setWorkerFunction(workerFunction: Function) {
+    this.workerFunction = serializeFunction(workerFunction);
+    this.workers.forEach((worker) => {
+      worker.postMessage({ func: this.workerFunction });
+    });
+  }
+  /**
+   * 销毁所有worker
+   */
+  public destroy() {
+    this.workers.forEach((worker) => worker.terminate());
+    this.workers = [];
+    this.taskQueue = [];
+    this.availableWorker = 0;
+  }
+  /**
+   * 尝试执行任务
+   */
   private tryStartTask() {
-    // //正在执行的任务数量达到最大值，直接返回
-    // if (this.activeTasks >= this.maxWorkers) {
-    //   return;
-    // }
-
-    //任务队列为空，销毁所有worker
-    if (!this.taskQueue.length && this.availableWorker >= this.maxWorkers) {
-      console.log("销毁");
-      return this.destroy();
-    }
     //获取worker
     let worker: Worker | null = null;
+    //任务队列为空,并且所有worker都可用，就代表全部任务已完成
+    if (!this.taskQueue.length && this.availableWorker >= this.maxWorkers) {
+      console.log("任务完成");
+      return this.destroy(); //TODO:这里有问题
+    }
     //如果worker未达到最大数量，创建新的worker
-    if (this.workers.length < this.maxWorkers) {
+    else if (this.workers.length < this.maxWorkers) {
       console.log("new Worker");
       worker = new Worker("./worker.js");
       worker.postMessage({ func: this.workerFunction });
       this.workers.push(worker);
-      //如果worker已达到最大数量，判断是否有可用worker
-    } else if (this.availableWorker > 0) {
+    }
+    //如果worker已达到最大数量，判断是否有可用worker
+    else if (this.availableWorker > 0) {
       this.availableWorker--;
       worker = this.workers.find(({ onmessage }) => !onmessage)!;
-      //如果没有可用worker，直接返回
-    } else {
+    }
+    //如果没有可用worker，直接返回
+    else {
       return;
     }
     //从任务队列中取出一个任务
@@ -55,7 +76,7 @@ export default class WorkService {
     if (!task) {
       return;
     }
-    //执行任务
+    //添加任务完成回调
     worker.onmessage = (event) => {
       worker!.onmessage = null;
       task.resolve(event.data);
@@ -66,12 +87,5 @@ export default class WorkService {
       task.reject(event);
     };
     worker.postMessage({ data: task.args });
-  }
-
-  private destroy() {
-    this.workers.forEach((worker) => worker.terminate());
-    this.workers = [];
-    this.taskQueue = [];
-    this.availableWorker = 0;
   }
 }
