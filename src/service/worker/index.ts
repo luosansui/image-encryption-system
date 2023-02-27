@@ -1,15 +1,28 @@
 import { serializeFunction } from "@/utils/function";
 import { Task } from "./type";
+import WorkerThread from "./worker?worker";
 export default class WorkService {
-  private maxWorkers: number;
-  private workerFunction: ArrayBuffer;
-  private workers: Worker[] = [];
-  private taskQueue: Task[] = [];
-  private availableWorker = 0;
+  private readonly maxWorkers: number; //最大worker数量
+  private readonly Script: new () => Worker; //worker脚本
+  private exeFunc: ArrayBuffer; //worker执行函数
+  private workers: Worker[] = []; //worker列表
+  private taskQueue: Task[] = []; //任务队列
+  private availableWorker = 0; //可用worker数量
+  private promiseRes: null | ((value: any) => void) = null; //worker工作完成状态
+  public autoDestroy = true; //是否自动销毁worker
+  public status: Promise<string> = new Promise(
+    (res) => (this.promiseRes = res)
+  );
 
-  constructor(maxWorkers: number, workerFunction: Function) {
+  //构造函数
+  constructor(
+    maxWorkers: number,
+    exeFunc: Function,
+    Script?: new () => Worker
+  ) {
     this.maxWorkers = maxWorkers;
-    this.workerFunction = serializeFunction(workerFunction);
+    this.Script = Script || WorkerThread;
+    this.exeFunc = serializeFunction(exeFunc);
   }
   /**
    * 执行任务
@@ -26,19 +39,22 @@ export default class WorkService {
   }
   /**
    * 设置worker的工作函数
-   * @param workerFunction 传入的函数
+   * @param exeFunc 传入的函数
    */
-  public setWorkerFunction(workerFunction: Function) {
-    this.workerFunction = serializeFunction(workerFunction);
+  public setExeFunc(exeFunc: Function) {
+    this.exeFunc = serializeFunction(exeFunc);
     this.workers.forEach((worker) => {
-      worker.postMessage({ func: this.workerFunction });
+      worker.postMessage({ func: this.exeFunc });
     });
   }
   /**
    * 销毁所有worker
    */
   public destroy() {
-    this.workers.forEach((worker) => worker.terminate());
+    console.log("销毁所有worker服务");
+    this.workers.forEach((worker) => {
+      worker.terminate();
+    });
     this.workers = [];
     this.taskQueue = [];
     this.availableWorker = 0;
@@ -49,24 +65,34 @@ export default class WorkService {
   private tryStartTask() {
     //获取worker
     let worker: Worker | null = null;
-    //任务队列为空,并且所有worker都可用，就代表全部任务已完成
-    if (!this.taskQueue.length && this.availableWorker >= this.maxWorkers) {
-      console.log("任务完成");
-      return this.destroy(); //TODO:这里有问题
+    //情况1：队列为空, 不需要取worker
+    if (!this.taskQueue.length) {
+      //如果当前线程是最后一个并且就代表全部任务已完成
+      if (this.availableWorker >= this.maxWorkers) {
+        console.log("任务完成");
+        //设置状态为完成
+        this.promiseRes?.("done");
+        //如果设置了自动销毁，就销毁所有worker
+        if (this.autoDestroy) {
+          this.destroy();
+        }
+      }
+      return;
     }
+    //情况2：队列不为空, 需要取worker
     //如果worker未达到最大数量，创建新的worker
-    else if (this.workers.length < this.maxWorkers) {
+    if (this.workers.length < this.maxWorkers) {
       console.log("new Worker");
-      worker = new Worker("./worker.js");
-      worker.postMessage({ func: this.workerFunction });
+      worker = new this.Script();
       this.workers.push(worker);
+      worker.postMessage({ func: this.exeFunc! });
     }
-    //如果worker已达到最大数量，判断是否有可用worker
+    //否则，并且如果worker已达到最大数量，判断是否有可用worker
     else if (this.availableWorker > 0) {
       this.availableWorker--;
       worker = this.workers.find(({ onmessage }) => !onmessage)!;
     }
-    //如果没有可用worker，直接返回
+    //否则，判断为没有可用worker，直接返回
     else {
       return;
     }
@@ -86,6 +112,6 @@ export default class WorkService {
     worker.onerror = (event) => {
       task.reject(event);
     };
-    worker.postMessage({ data: task.args });
+    worker.postMessage({ args: task.args });
   }
 }
