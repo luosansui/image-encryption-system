@@ -4,7 +4,7 @@ class PluginService {
   private plugins: Plugin[] = [];
   private loadedModules: Record<string, PluginModule> = {};
 
-  public async loadPlugin(plugin: Plugin): Promise<void> {
+  public async loadPlugin(plugin: Plugin): Promise<boolean> {
     if (this.loadedModules[plugin.name]) {
       throw new Error(`Plugin ${plugin.name} has already been loaded`);
     }
@@ -21,6 +21,7 @@ class PluginService {
       this.plugins.splice(index, 0, plugin);
     }
     this.loadedModules[plugin.name] = module;
+    return true;
   }
 
   public unloadPlugin(pluginName: string): void {

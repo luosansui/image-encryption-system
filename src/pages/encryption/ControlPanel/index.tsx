@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { initService, encrypt, getPlugins } from "@/service/image";
+import { useEffect, useRef, useState } from "react";
+import ImageService from "@/service/image";
 import { Plugin } from "@/service/plugin/type";
 import List from "@/components/List";
 import { FileType } from "@/components/Upload/type";
@@ -13,8 +13,9 @@ export default function ControlPanel({
 }) {
   const [quality, setQuality] = useState(50);
   const [isEncrypting, setIsEncrypting] = useState(false);
-  const [pluginName, setPluginName] = useState<string>("");
+  const [pluginName, setPluginName] = useState<string>("未载入插件");
   const [pluginList, setPluginList] = useState<Plugin[]>([]);
+  const { current: imageService } = useRef(new ImageService());
 
   const handleQualityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(event.target.value);
@@ -29,11 +30,11 @@ export default function ControlPanel({
     }
     setIsEncrypting(true);
     //获取加密结果
-    const resList = encrypt(pluginName, fileList, "");
+    const resList = imageService.encrypt(pluginName, fileList, "");
     //处理加密结果
     resList.forEach(async (promisePair) => {
       const pair = await promisePair;
-      handleGenerateResult?.([pair[0], pair[1]]);
+      handleGenerateResult?.(pair);
     });
   };
 
@@ -42,25 +43,28 @@ export default function ControlPanel({
     // TODO: cancel encryption
   };
   //初始化服务
-  const initPlugin = () => {
-    const { destroyed, result } = initService();
-    result.then((res) => {
-      if (res) {
-        const plugins = getPlugins();
-        console.log("plugins", plugins);
+  const initImageService = async () => {
+    try {
+      await imageService.initService();
+      const plugins = imageService.getPlugins();
+      console.log("plugins", plugins);
+      if (plugins.length) {
         setPluginList(plugins);
-        setPluginName(plugins[0]?.name);
+        setPluginName(plugins[0]?.name ?? "未命名插件");
       }
-    });
-    return destroyed;
+    } catch (error) {
+      console.error(error);
+    }
   };
   //选择算法插件改变
   const handlePluginChange = (pluginName: string) => {
     setPluginName(pluginName);
   };
 
-  //载入图片算法插件系统
-  useEffect(() => initPlugin(), []);
+  //载入图片业务
+  useEffect(() => {
+    initImageService();
+  }, []);
 
   return (
     <div className="h-full relative flex flex-col text-gray-600">
