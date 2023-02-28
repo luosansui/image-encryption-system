@@ -1,9 +1,10 @@
 import { calculateMD5 } from "@/utils/file";
-import React, { useEffect, useState } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import Dropzone from "react-dropzone";
 import pLimit from "p-limit";
 import { produce } from "immer";
 import { FileType } from "@/components/Upload/type";
+import ImageCropModal from "../Image";
 
 const Upload: React.FC<{
   list?: FileType[];
@@ -12,7 +13,10 @@ const Upload: React.FC<{
   className?: string;
 }> = ({ list, onAdd, onRemove, className }) => {
   const [files, setFiles] = useState<FileType[]>(list || []);
-
+  //打开图片裁剪模态框
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  //要编辑的图片链接
+  const [editImageUrl, setEditImageUrl] = useState<string>("");
   //当外部传入的list时，该组件为受控组件
   useEffect(() => {
     if (list !== undefined) {
@@ -79,75 +83,96 @@ const Upload: React.FC<{
     //通知外部变更
     onRemove?.(URL.revokeObjectURL, md5);
   };
-
+  /**
+   * 打开图片裁剪模态框
+   */
+  const handleOpenModal = (imageUrl: string) => {
+    setIsModalOpen(true);
+    setEditImageUrl(imageUrl);
+  };
+  /**
+   * 关闭图片裁剪模态框
+   */
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditImageUrl("");
+  };
   return (
-    <div className={`flex flex-wrap ${className ?? ""}`}>
-      <Dropzone onDrop={handleDrop}>
-        {({ getRootProps, getInputProps }) => (
-          <div className="sticky top-0 p-2 box-border w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-[12.5%]">
-            <div
-              className="h-32 p-2 border-2 border-dashed border-gray-400 rounded cursor-pointer select-none flex justify-center items-center"
-              {...getRootProps()}
+    <Fragment>
+      <div className={`flex flex-wrap ${className ?? ""}`}>
+        <Dropzone onDrop={handleDrop}>
+          {({ getRootProps, getInputProps }) => (
+            <div className="sticky top-0 p-2 box-border w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-[12.5%]">
+              <div
+                className="h-32 p-2 border-2 border-dashed border-gray-400 rounded cursor-pointer select-none flex justify-center items-center"
+                {...getRootProps()}
+              >
+                <input {...getInputProps()} />
+                <svg
+                  className="h-10 w-10 text-gray-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+              </div>
+            </div>
+          )}
+        </Dropzone>
+        {files.map((file) => (
+          <div
+            key={file.md5}
+            className="p-2 box-border relative w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-[12.5%]"
+          >
+            <img
+              src={file.src}
+              alt={file.file.name}
+              onClick={() => handleOpenModal(file.src)}
+              className="w-full h-32 object-cover rounded border border-gray-200"
+            />
+            <button
+              className="text-black absolute top-0 right-0"
+              onClick={() => handleRemove(file.md5)}
             >
-              <input {...getInputProps()} />
               <svg
-                className="h-10 w-10 text-gray-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+                viewBox="0 0 1024 1024"
+                version="1.1"
                 xmlns="http://www.w3.org/2000/svg"
+                p-id="902"
+                width="24"
+                height="24"
               >
                 <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M12 4v16m8-8H4"
-                />
+                  d="M512 512m-460.8 0a460.8 460.8 0 1 0 921.6 0 460.8 460.8 0 1 0-921.6 0Z"
+                  fill="#E73A30"
+                  p-id="903"
+                ></path>
+                <path
+                  d="M584.3968 512l108.6464 108.5952a51.2 51.2 0 0 1-72.448 72.448L512 584.3968l-108.5952 108.6464a51.2 51.2 0 1 1-72.448-72.448L439.6032 512 330.9568 403.4048A51.2 51.2 0 0 1 403.456 330.9568L512 439.6032l108.5952-108.6464a51.2 51.2 0 0 1 72.448 72.448L584.3968 512z"
+                  fill="#FFFFFF"
+                  p-id="904"
+                ></path>
               </svg>
-            </div>
+            </button>
           </div>
-        )}
-      </Dropzone>
-      {files.map((FileType) => (
-        <div
-          key={FileType.md5}
-          className="p-2 box-border relative w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-[12.5%]"
-        >
-          <img
-            src={FileType.src}
-            alt={FileType.file.name}
-            className="w-full h-32 object-cover rounded border border-gray-200"
-          />
-          <button
-            className="text-black absolute top-0 right-0"
-            onClick={() => handleRemove(FileType.md5)}
-          >
-            <svg
-              viewBox="0 0 1024 1024"
-              version="1.1"
-              xmlns="http://www.w3.org/2000/svg"
-              p-id="902"
-              width="24"
-              height="24"
-            >
-              <path
-                d="M512 512m-460.8 0a460.8 460.8 0 1 0 921.6 0 460.8 460.8 0 1 0-921.6 0Z"
-                fill="#E73A30"
-                p-id="903"
-              ></path>
-              <path
-                d="M584.3968 512l108.6464 108.5952a51.2 51.2 0 0 1-72.448 72.448L512 584.3968l-108.5952 108.6464a51.2 51.2 0 1 1-72.448-72.448L439.6032 512 330.9568 403.4048A51.2 51.2 0 0 1 403.456 330.9568L512 439.6032l108.5952-108.6464a51.2 51.2 0 0 1 72.448 72.448L584.3968 512z"
-                fill="#FFFFFF"
-                p-id="904"
-              ></path>
-            </svg>
-          </button>
-        </div>
-      ))}
-      {/* <div className="absolute -bottom-2 left-2 text-xs font-semibold text-gray-600">
-        {files.length ? `共${files.length}张图片` : null}
-      </div> */}
-    </div>
+        ))}
+      </div>
+      <ImageCropModal
+        imageUrl={editImageUrl}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onChange={(...args) => {
+          console.log(...args);
+        }}
+      />
+    </Fragment>
   );
 };
 
