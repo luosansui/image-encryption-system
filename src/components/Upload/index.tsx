@@ -1,30 +1,41 @@
 import { calculateMD5 } from "@/utils/file";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Dropzone from "react-dropzone";
 import pLimit from "p-limit";
 import { produce } from "immer";
 import { FileType } from "@/components/Upload/type";
 
 const Upload: React.FC<{
-  onChange?: (files: FileType[]) => void;
+  list?: FileType[];
+  onAdd?: (files: FileType[]) => void;
+  onRemove?: (revoke: (url: string) => void, md5: string) => void; //第一个参数revoke是为了显式的告诉外部需要释放url资源
   className?: string;
-}> = ({ onChange, className }) => {
-  const [files, setFiles] = useState<FileType[]>([]);
-  const tempFileHashSet = useRef(new Set<string>());
+}> = ({ list, onAdd, onRemove, className }) => {
+  const [files, setFiles] = useState<FileType[]>(list || []);
+
+  //当外部传入的list时，该组件为受控组件
+  useEffect(() => {
+    if (list !== undefined) {
+      setFiles(list);
+    }
+  }, [list]);
+
   /**
    * 过滤重复文件
    * @param files 文件列表
    * @returns 不重复的文件列表
    */
-  async function filterDuplicateFiles(files: File[]) {
+  async function filterDuplicateFiles(fileList: File[]) {
     const limit = pLimit(3);
     const uniqueFiles: FileType[] = [];
+    //当前所有文件的md5集合
+    const fileHashSet = new Set(files.map((file) => file.md5));
     await Promise.all(
-      files.map(async (file) => {
+      fileList.map(async (file) => {
         try {
           const md5 = await limit(() => calculateMD5(file));
-          if (!tempFileHashSet.current.has(md5)) {
-            tempFileHashSet.current.add(md5);
+          if (!fileHashSet.has(md5)) {
+            fileHashSet.add(md5);
             const src = URL.createObjectURL(file);
             uniqueFiles.push({ file, md5, src });
           }
@@ -38,29 +49,42 @@ const Upload: React.FC<{
 
   const handleDrop = async (acceptedFiles: File[]) => {
     const newFiles = await filterDuplicateFiles(acceptedFiles);
-    setFiles(
-      produce((draftState) => {
-        draftState.push(...newFiles);
-      })
-    );
+    //当外部没有传入的list时，该组件为非受控组件，直接更新状态
+    if (list === undefined) {
+      setFiles(
+        produce((draftState) => {
+          draftState.push(...newFiles);
+        })
+      );
+    }
+    //通知外部变更
+    onAdd?.(newFiles);
   };
 
   const handleRemove = (md5: string) => {
-    setFiles((prevState) => prevState.filter((file) => file.md5 !== md5));
-    tempFileHashSet.current.delete(md5);
+    //当外部没有传入的list时，该组件为非受控组件，直接更新状态
+    if (list === undefined) {
+      const fileIndex = files.findIndex((file) => file.md5 === md5);
+      if (fileIndex !== -1) {
+        const file = files[fileIndex];
+        URL.revokeObjectURL(file.src);
+        console.log("[[非受控组件]]: Remove File");
+        setFiles(
+          produce((draft) => {
+            draft.splice(fileIndex, 1);
+          })
+        );
+      }
+    }
+    //通知外部变更
+    onRemove?.(URL.revokeObjectURL, md5);
   };
 
-  /**
-   * 文件列表变更时通知上级组件
-   */
-  useEffect(() => {
-    onChange?.(files);
-  }, [files]);
   return (
     <div className={`flex flex-wrap ${className ?? ""}`}>
       <Dropzone onDrop={handleDrop}>
         {({ getRootProps, getInputProps }) => (
-          <div className="sticky top-0 p-2 box-border w-1/3 md:w-1/4 lg:w-1/6 2xl:w-1/12">
+          <div className="sticky top-0 p-2 box-border w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-[12.5%]">
             <div
               className="h-32 p-2 border-2 border-dashed border-gray-400 rounded cursor-pointer select-none flex justify-center items-center"
               {...getRootProps()}
@@ -87,7 +111,7 @@ const Upload: React.FC<{
       {files.map((FileType) => (
         <div
           key={FileType.md5}
-          className="p-2 box-border relative w-1/3 md:w-1/4 lg:w-1/6 2xl:w-1/12"
+          className="p-2 box-border relative w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-[12.5%]"
         >
           <img
             src={FileType.src}

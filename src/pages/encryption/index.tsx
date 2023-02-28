@@ -10,11 +10,31 @@ export default function Encryption() {
   const [fileList, setFileList] = useState<FileType[]>([]);
   const [filePair, setFilePair] = useState<[FileType, FileType][]>([]);
   /**
-   * 处理上传列表变更
+   * 新增上传文件
    */
-  const handleFileListChange = (files: FileType[]) => {
-    console.log("files", files);
-    setFileList(files);
+  const handleFileListAdd = (files: FileType[]) => {
+    setFileList(
+      produce((draftState) => {
+        draftState.push(...files);
+      })
+    );
+  };
+  /**
+   * 删除上传文件
+   */
+  const handleFileListRemove = (revoke: (url: string) => void, md5: string) => {
+    const fileIndex = fileList.findIndex((file) => file.md5 === md5);
+    if (fileIndex == -1) {
+      return;
+    }
+    const file = fileList[fileIndex];
+    revoke(file.src);
+    console.log("[[受控组件]]: Remove File");
+    setFileList(
+      produce((draft) => {
+        draft.splice(fileIndex, 1);
+      })
+    );
   };
   /**
    * 处理生成结果
@@ -43,7 +63,9 @@ export default function Encryption() {
           <div className="relative h-full w-full overflow-y-auto overflow-x-hidden">
             <Upload
               className="absolute w-full select-none"
-              onChange={handleFileListChange}
+              list={fileList}
+              onAdd={handleFileListAdd}
+              onRemove={handleFileListRemove}
             ></Upload>
           </div>
         </div>
@@ -63,7 +85,7 @@ export default function Encryption() {
           <ProgressBar progress={progress} />
         </div>
       </div>
-      <div className="min-w-[300px] h-full  ml-4 p-2 border-2 border-gray-200 rounded-lg">
+      <div className="w-[400px] h-full ml-4 p-2 border-2 border-gray-200 rounded-lg">
         {/* 控制区 */}
         <ControlPanel
           fileList={fileList}
