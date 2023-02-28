@@ -15,7 +15,7 @@ export default function ControlPanel({
   const [isEncrypting, setIsEncrypting] = useState(false);
   const [pluginName, setPluginName] = useState<string>("未载入插件");
   const [pluginList, setPluginList] = useState<Plugin[]>([]);
-  const { current: imageService } = useRef(new ImageService());
+  const imageService = useRef<ImageService | null>(null);
 
   const handleQualityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(event.target.value);
@@ -30,7 +30,7 @@ export default function ControlPanel({
     }
     setIsEncrypting(true);
     //获取加密结果
-    const resList = imageService.encrypt(pluginName, fileList, "");
+    const resList = imageService.current!.encrypt(pluginName, fileList, "");
     //处理加密结果
     resList.forEach(async (promisePair) => {
       const pair = await promisePair;
@@ -45,8 +45,9 @@ export default function ControlPanel({
   //初始化服务
   const initImageService = async () => {
     try {
-      await imageService.initService();
-      const plugins = imageService.getPlugins();
+      imageService.current = new ImageService();
+      await imageService.current.initService();
+      const plugins = imageService.current.getPlugins();
       console.log("plugins", plugins);
       if (plugins.length) {
         setPluginList(plugins);
@@ -64,6 +65,9 @@ export default function ControlPanel({
   //载入图片业务
   useEffect(() => {
     initImageService();
+    return () => {
+      imageService.current = null;
+    };
   }, []);
 
   return (
