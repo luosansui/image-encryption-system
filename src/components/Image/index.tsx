@@ -61,6 +61,24 @@ const ImageCropModal: React.FC<Props> = ({
     setRotate(newRotation);
   };
 
+  /**
+   *
+   * @param newScale 新的缩放比例
+   */
+  const handleScaleChange = (newScale: number) => {
+    setScale(newScale);
+  };
+  /**
+   * 刻度尺组件回调
+   */
+  const handleRulerChange = (values: { scale: number; rotate: number }) => {
+    console.log("type,value", values);
+    // if (type === "scale") {
+    //   handleScaleChange(value);
+    // } else if (type === "rotate") {
+    //   handleRotationChange(value);
+    // }
+  };
   /*  const handleConfirm = () => {
     if (!imageRef || !crop.width || !crop.height) return;
 
@@ -141,7 +159,6 @@ const ImageCropModal: React.FC<Props> = ({
   const handleClose = () => {
     onClose();
   };
-
   //模态框打开后，设置图片地址
   const handleAfterOpen = () => {
     setImageSrc(imageUrl);
@@ -173,7 +190,7 @@ const ImageCropModal: React.FC<Props> = ({
         </div>
 
         <div className="flex-1 bg-gray-200 relative">
-          <div className="absolute w-full h-full p-4 overflow-auto flex">
+          <div className="absolute w-full h-full overflow-auto flex">
             <ImageCrop
               crop={crop}
               className="align-bottom m-auto"
@@ -192,25 +209,24 @@ const ImageCropModal: React.FC<Props> = ({
         </div>
 
         <div className="mt-4">
-          <div className="flex flex-col  items-center justify-center mb-4">
-            {/* <span className="text-sm font-medium mr-2">Rotate:</span>
-            <div className="flex items-center">
-              <button
-                className="text-gray-600 hover:text-black cursor-pointer focus:outline-none mr-2"
-                onClick={() => handleRotationChange(-90)}
-              >
-                -90°
-              </button>
-              <button
-                className="text-gray-600 hover:text-black cursor-pointer focus:outline-none mr-2"
-                onClick={() => handleRotationChange(90)}
-              >
-                +90°
-              </button>
-            </div> */}
-            <Ruler min={0} max={100} defaultValue={0} />
+          <div className="flex flex-col  items-center justify-center">
+            <Ruler
+              scale={{
+                min: 0,
+                max: 100,
+                defaultValue: 0,
+                suffix: "%",
+              }}
+              rotate={{
+                min: -180,
+                max: 180,
+                defaultValue: 0,
+                suffix: "°",
+              }}
+              onChange={handleRulerChange}
+            />
           </div>
-          <div className="flex justify-center">
+          <div className="flex justify-center mt-4">
             <button
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium focus:outline-none"
               onClick={() => {}}

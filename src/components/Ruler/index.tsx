@@ -1,29 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
-interface Props {
+interface typeProps {
   min: number;
   max: number;
   defaultValue: number;
-  onChange?: (value: number) => void;
+  suffix: string;
+}
+//不同类型刻度尺的刻度值
+interface Props {
+  scale: typeProps;
+  rotate: typeProps;
+  onChange?: (values: { scale: number; rotate: number }) => void;
 }
 
-const Tick = ({ index, isMajor }: { index: number; isMajor: boolean }) => {
-  const tickStyle = [
-    "relative",
-    "h-1",
-    "w-1",
-    "bg-black",
-    isMajor ? "h-2 w-2 rounded-full" : "",
-    index % 5 === 0 && !isMajor ? "h-2 w-2 rounded-full" : "",
-    index % 10 === 0 && !isMajor ? "h-3 w-3 rounded-full" : "",
-  ].join(" ");
-
-  return <div className={tickStyle} />;
-};
-
-const Ruler = ({ min, max, defaultValue, onChange }: Props) => {
-  //正在拖动
-  const [dragging, setDragging] = useState(false);
+const Ruler = (prop: Props) => {
   //鼠标按下位置
   const mouseDownPosition = useRef<{
     xPos: number;
@@ -34,13 +24,22 @@ const Ruler = ({ min, max, defaultValue, onChange }: Props) => {
   });
   //刻度尺的ref
   const rulerRef = useRef<HTMLDivElement>(null);
+  //正在拖动
+  const [dragging, setDragging] = useState(false);
   //正在操作的对象
-  const [activeObject, setActiveObject] = useState<"scale" | "rotate">("scale");
-  //当前数值
-  const [currentValue, setCurrentValue] = useState(defaultValue);
+  const [activeType, setActiveType] = useState<"scale" | "rotate">("scale");
   //当前位置
   const [position, setPosition] = useState(0);
-
+  //刻度尺缩放和旋转后的数值
+  const [values, setValues] = useState({
+    scale: 1,
+    rotate: 0,
+  });
+  //刻度尺类型
+  const typeObj: { key: "scale" | "rotate"; name: string }[] = [
+    { key: "scale", name: "缩放" },
+    { key: "rotate", name: "旋转" },
+  ];
   //const [scrollPosition, setScrollPosition] = useState(0);
 
   /**
@@ -68,8 +67,7 @@ const Ruler = ({ min, max, defaultValue, onChange }: Props) => {
   const handleMouseMove = (event: MouseEvent) => {
     if (dragging && rulerRef.current && mouseDownPosition.current) {
       //刻度尺位置
-      const { left: nodeLeft, width: nodeWidth } =
-        rulerRef.current.getBoundingClientRect();
+      const { width: nodeWidth } = rulerRef.current.getBoundingClientRect();
       //鼠标位置
       const { xPos } = mouseDownPosition.current;
       const { clientX, clientY } = event;
@@ -81,12 +79,11 @@ const Ruler = ({ min, max, defaultValue, onChange }: Props) => {
         Math.min(1, position + offsetX / nodeWidth)
       );
       setPosition(percentage);
-      console.log("percentage", percentage);
+      //更新当前鼠标点击位置
       mouseDownPosition.current = {
         xPos: clientX,
         yPos: clientY,
       };
-      //更新
     }
   };
 
@@ -105,46 +102,46 @@ const Ruler = ({ min, max, defaultValue, onChange }: Props) => {
   }, [dragging, handleMouseMove, handleMouseUp]);
 
   /**
-   * 根据当前数值计算当前位置
+   * 切换刻度尺类型
    */
-  const translateX = useMemo(() => {
-    if (rulerRef.current) {
-      const percent = (currentValue - min) / (max - min);
-      return -percent * 100;
-    }
-  }, [currentValue]);
+  const handleTypeChange = (type: "scale" | "rotate") => {
+    //读取将要切换的类型的默认刻度
+    const willSetType = prop[type];
+    //用记录的值和默认刻度计算当前位置
+    const percent =
+      (values[type] - willSetType.min) / (willSetType.max - willSetType.min);
+    setPosition(percent);
+    setActiveType(type);
+  };
 
-  // useEffect(() => {
-  //   if (rulerRef) {
-  //   }
-  // }, [min, max, value]);
-
-  /* useEffect(() => {
-    if (rulerRef.current) {
-      const { width } = rulerRef.current.getBoundingClientRect();
-      const percent = (value - min) / (max - min);
-      const newPosition = percent * width - width / 2;
-      setScrollPosition(-newPosition);
-    }
-  }, [min, max, value]); */
-
-  /* useEffect(() => {
-    if (rulerRef.current) {
-      const { width } = rulerRef.current.getBoundingClientRect();
-      const rulerWidth = rulerRef.current.scrollWidth;
-      const maxScrollPosition = rulerWidth - width;
-      const newScrollPosition = Math.max(
-        -maxScrollPosition,
-        Math.min(0, scrollPosition)
-      );
-      setScrollPosition(newScrollPosition);
-      rulerRef.current.scrollTo({ left: -newScrollPosition });
-    }
-  }, [scrollPosition]);
-
+  /**
+   * 根据组件收到的参数计算当前位置
+   */
   useEffect(() => {
-    onChange?.(position);
-  }, [position, onChange]); */
+    const type = prop[activeType];
+    const percent = (type.defaultValue - type.min) / (type.max - type.min);
+    setPosition(percent);
+  }, [prop.rotate, prop.scale]);
+
+  /**
+   * 根据当前位置计算当前数值
+   */
+  useEffect(() => {
+    const type = prop[activeType];
+    const value = Math.round(position * (type.max - type.min) + type.min);
+    //记录当前数值
+    setValues({
+      ...values,
+      [activeType]: value,
+    });
+  }, [position]);
+
+  /**
+   * 触发回调函数
+   */
+  useEffect(() => {
+    prop.onChange?.(values);
+  }, [values]);
 
   return (
     <>
@@ -156,12 +153,13 @@ const Ruler = ({ min, max, defaultValue, onChange }: Props) => {
           <div className="z-10 absolute w-9 left-0 top-0 bottom-0 bg-gradient-to-l from-transparent to-white"></div>
           <div className="z-10 absolute w-9 right-0 top-0 bottom-0 bg-gradient-to-r from-transparent to-white"></div>
           <div className="z-10 absolute inset-x-1/2 h-1/4 top-[2%] w-[1px] bg-gray-400"></div>
-          <div className="z-10 absolute px-6 text-sm left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-transparent via-white to-transparent">
-            {currentValue}°
+          <div className="z-10 absolute px-10 text-sm left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-transparent via-white to-transparent">
+            {values[activeType]}
+            {prop[activeType].suffix}
           </div>
           <div
-            style={{ transform: `translateX(${translateX}%)` }}
-            className="transition-all h-[56px] w-[404px]"
+            style={{ transform: `translateX(${-position * 100}%)` }}
+            className="transition-all duration-75 h-[56px] w-[404px]"
           >
             <div className="absolute left-1/2" ref={rulerRef}>
               <svg
@@ -183,74 +181,20 @@ const Ruler = ({ min, max, defaultValue, onChange }: Props) => {
           </div>
         </div>
         <div>
-          <button
-            className={`${
-              activeObject === "scale"
-                ? "bg-gray-200 "
-                : "hover:border-gray-300"
-            } py-1 px-4 border border-transparent text-gray-700 text-sm rounded-full mr-4`}
-          >
-            缩放
-          </button>
-          <button
-            className={`${
-              activeObject === "rotate"
-                ? "bg-gray-200 "
-                : "hover:border-gray-300"
-            } py-1 px-4 border border-transparent text-gray-700 text-sm rounded-full mr-4`}
-          >
-            旋转
-          </button>
-        </div>
-        {/* <div className="absolute top-0 left-0 w-full h-full" ref={rulerRef}>
-          {[...Array(max - min + 1)].map((_, index) => (
-            <div
+          {typeObj.map((item, index) => (
+            <button
               key={index}
-              className="absolute top-0 bottom-0 left-1/2 transform -translate-x-1/2"
-              style={{ left: `${index * 10}px` }}
+              onClick={() => handleTypeChange(item.key)}
+              className={`${
+                activeType == item.key
+                  ? "bg-gray-200 "
+                  : "hover:border-gray-300"
+              } py-1 px-4 border border-transparent text-gray-700 text-sm rounded-full mr-4`}
             >
-              <Tick index={index} isMajor={index % 10 === 0} />
-            </div>
+              {item.name}
+            </button>
           ))}
-        </div> */}
-        {/* <div
-          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 bg-white rounded-full h-10 w-10 flex justify-center items-center"
-          style={{ boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)" }}
-        >
-          <div className="relative h-4 w-4 bg-black rounded-full">
-            <div
-              className="absolute bottom-full left-1/2 transform -translate-x-1/2 text-xs font-bold text-gray-700 bg-white px-2 py-1 rounded-full"
-              style={{
-                boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-                top: "-36px",
-              }}
-            >
-              {Math.round(position)}
-            </div>
-          </div>
-        </div> */}
-        {/* <div
-          className="absolute top-0 left-0 w-1/6 h-full bg-gradient-to-r from-white to-transparent"
-          style={{ zIndex: 2, opacity: scrollPosition >= 0 ? 0 : 1 }}
-        />
-        <div
-          className="absolute top-0 right-0 w-1/6 h-full bg-gradient-to-l from-white to-transparent"
-          style={{
-            zIndex: 2,
-            opacity: 1,
-          }}
-        />
-        <div
-          className="absolute top-0 left-0 w-1/6 h-full bg-gradient-to-r from-white to-transparent animate-bounce"
-          style={{ zIndex: 2, opacity: scrollPosition < 0 ? 1 : 0 }}
-        />
-        <div
-          className="absolute top-0 right0 w-1/6 h-full bg-gradient-to-l from-white to-transparent animate-bounce"
-          style={{
-            zIndex: 2,
-            opacity: 0,
-          }}
-        /> */}
+        </div>
       </div>
     </>
   );
