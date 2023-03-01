@@ -172,21 +172,23 @@ const ImageCropModal: React.FC<Props> = ({
           </button>
         </div>
 
-        <div className="flex-1 p-4 bg-gray-200 flex overflow-auto">
-          <ImageCrop
-            crop={crop}
-            className="align-bottom m-auto"
-            onChange={handleCropChange}
-            onComplete={handleCropChange}
-            minHeight={10}
-            minWidth={10}
-          >
-            <img
-              ref={imageRef}
-              src={imageSrc}
-              style={{ transform: `scale(${scale}) rotate(${rotate}deg)` }}
-            />
-          </ImageCrop>
+        <div className="flex-1 bg-gray-200 relative">
+          <div className="absolute w-full h-full p-4 overflow-auto flex">
+            <ImageCrop
+              crop={crop}
+              className="align-bottom m-auto"
+              onChange={handleCropChange}
+              onComplete={handleCropChange}
+              minHeight={10}
+              minWidth={10}
+            >
+              <img
+                ref={imageRef}
+                src={imageSrc}
+                style={{ transform: `scale(${scale}) rotate(${rotate}deg)` }}
+              />
+            </ImageCrop>
+          </div>
         </div>
 
         <div className="mt-4">
