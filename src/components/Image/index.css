@@ -10,3 +10,7 @@
 .ReactModalPortal .ReactModal__Overlay--before-close{
   opacity: 0;
 }
+/* .ReactCrop__child-wrapper{
+  height: fit-content;
+  width: fit-content;
+} */

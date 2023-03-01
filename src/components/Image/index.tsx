@@ -36,10 +36,14 @@ const ImageCropModal: React.FC<Props> = ({
   const [crop, setCrop] = useState<Crop>(initCrop);
   //缩放比例
   const [scale, setScale] = useState(1);
+  //裁剪组件缩放比例
+  // const [cropWidthScale, setCropWidthScale] = useState(100);
   //旋转角度
   const [rotate, setRotate] = useState(0);
   //图片引用
   const imageRef = React.useRef<HTMLImageElement>(null);
+  //图片容器引用
+  const containerRef = React.useRef<HTMLImageElement>(null);
   //图片地址
   const [imageSrc, setImageSrc] = useState<string>("");
   /**
@@ -86,6 +90,52 @@ const ImageCropModal: React.FC<Props> = ({
     handleClose();
   }; */
   /**
+   * 处理图片缩放
+   */
+  /*   const handleImageScaleChange = () => {
+    if (!imageRef || !imageRef.current) return;
+    const image = imageRef.current;
+    const container = containerRef.current;
+    if (!container) return;
+    //获取图片的宽高
+    const imageWidth = image.naturalWidth;
+    const imageHeight = image.naturalHeight;
+    //获取容器的宽高
+    const containerWidth = container.offsetWidth;
+    const containerHeight = container.offsetHeight;
+    //计算缩放比例
+    const widthRatio = containerWidth / imageWidth;
+    const heightRatio = containerHeight / imageHeight;
+    //图片应该缩放的比例
+    const scale = Math.min(widthRatio, heightRatio);
+    //裁剪组件宽度缩放比例
+    const cropScale = (scale * 100) / widthRatio;
+    setCropWidthScale(cropScale);
+  }; */
+  /**
+   * 处理图片加载
+   */
+  /*   const handleImageLoad = () => {
+    if (!imageRef || !imageRef.current) return;
+    const image = imageRef.current;
+    const container = containerRef.current;
+    if (!container) return;
+    //获取图片的宽高
+    const imageWidth = image.naturalWidth;
+    const imageHeight = image.naturalHeight;
+    //获取容器的宽高
+    const containerWidth = container.offsetWidth;
+    const containerHeight = container.offsetHeight;
+    //计算缩放比例
+    const widthRatio = containerWidth / imageWidth;
+    const heightRatio = containerHeight / imageHeight;
+    //图片应该缩放的比例
+    const scale = Math.min(widthRatio, heightRatio);
+    //裁剪组件宽度缩放比例
+    const cropScale = (scale * 100) / widthRatio;
+    setCropWidthScale(cropScale);
+  }; */
+  /**
    * 关闭模态框
    */
   const handleClose = () => {
@@ -109,9 +159,9 @@ const ImageCropModal: React.FC<Props> = ({
       onAfterOpen={handleAfterOpen}
       contentLabel="Image Crop Modal"
       overlayClassName="fixed inset-0 bg-black bg-opacity-75 z-50 select-none"
-      className="absolute left-1/2 -translate-x-1/2 top-32 bg-white rounded-md shadow-md w-3/4 lg:w-2/3 2xl:w-2/5 max-h-3/4 outline-none"
+      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-md shadow-md h-[75%] w-3/4 lg:w-2/3 2xl:w-2/5 outline-none"
     >
-      <div className="p-4">
+      <div className="h-full p-4 flex flex-col">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-bold">裁剪图片</h2>
           <button
@@ -122,47 +172,50 @@ const ImageCropModal: React.FC<Props> = ({
           </button>
         </div>
 
-        <ImageCrop
-          crop={crop}
-          onChange={handleCropChange}
-          onComplete={handleCropChange}
-          className="w-full"
-          minHeight={10}
-          minWidth={10}
-        >
-          <img
-            ref={imageRef}
-            src={imageSrc}
-            style={{ transform: `scale(${scale}) rotate(${rotate}deg)` }}
-            className="w-full"
-          />
-        </ImageCrop>
+        <div className="flex-1 p-4 bg-gray-200 flex overflow-auto">
+          <ImageCrop
+            crop={crop}
+            className="align-bottom m-auto"
+            onChange={handleCropChange}
+            onComplete={handleCropChange}
+            minHeight={10}
+            minWidth={10}
+          >
+            <img
+              ref={imageRef}
+              src={imageSrc}
+              style={{ transform: `scale(${scale}) rotate(${rotate}deg)` }}
+            />
+          </ImageCrop>
+        </div>
 
-        <div className="flex items-center justify-center mb-4">
-          <span className="text-sm font-medium mr-2">Rotate:</span>
-          <div className="flex items-center">
+        <div className="mt-4">
+          <div className="flex flex-col  items-center justify-center mb-4">
+            {/* <span className="text-sm font-medium mr-2">Rotate:</span>
+            <div className="flex items-center">
+              <button
+                className="text-gray-600 hover:text-black cursor-pointer focus:outline-none mr-2"
+                onClick={() => handleRotationChange(-90)}
+              >
+                -90°
+              </button>
+              <button
+                className="text-gray-600 hover:text-black cursor-pointer focus:outline-none mr-2"
+                onClick={() => handleRotationChange(90)}
+              >
+                +90°
+              </button>
+            </div> */}
+            <Ruler min={0} max={100} defaultValue={0} />
+          </div>
+          <div className="flex justify-center">
             <button
-              className="text-gray-600 hover:text-black cursor-pointer focus:outline-none mr-2"
-              onClick={() => handleRotationChange(-90)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium focus:outline-none"
+              onClick={() => {}}
             >
-              -90°
-            </button>
-            <button
-              className="text-gray-600 hover:text-black cursor-pointer focus:outline-none mr-2"
-              onClick={() => handleRotationChange(90)}
-            >
-              +90°
+              Confirm
             </button>
           </div>
-          <Ruler min={0} max={100} value={50} />
-        </div>
-        <div className="flex justify-center">
-          <button
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium focus:outline-none"
-            onClick={() => {}}
-          >
-            Confirm
-          </button>
         </div>
       </div>
     </Modal>
