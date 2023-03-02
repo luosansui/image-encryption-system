@@ -4,17 +4,18 @@ import ImageCrop, { Crop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import "./index.css";
 import Ruler from "../Ruler";
+import { FileType } from "../Upload/type";
 Modal.setAppElement("#root");
 
 interface Props {
-  imageUrl: string;
+  imageFile: FileType | null;
   isOpen: boolean;
   onClose: () => void;
   onChange: (newImageUrl: string) => void;
 }
 
 const ImageCropModal: React.FC<Props> = ({
-  imageUrl,
+  imageFile,
   isOpen,
   onClose,
   onChange,
@@ -36,14 +37,10 @@ const ImageCropModal: React.FC<Props> = ({
   const [crop, setCrop] = useState<Crop>(initCrop);
   //缩放比例
   const [scale, setScale] = useState(1);
-  //裁剪组件缩放比例
-  // const [cropWidthScale, setCropWidthScale] = useState(100);
   //旋转角度
   const [rotate, setRotate] = useState(0);
   //图片引用
   const imageRef = React.useRef<HTMLImageElement>(null);
-  //图片容器引用
-  const containerRef = React.useRef<HTMLImageElement>(null);
   //图片地址
   const [imageSrc, setImageSrc] = useState<string>("");
   /**
@@ -54,31 +51,12 @@ const ImageCropModal: React.FC<Props> = ({
     setCrop(newCrop);
   };
   /**
-   *
-   * @param newRotation 新的旋转角度
-   */
-  const handleRotationChange = (newRotation: number) => {
-    setRotate(newRotation);
-  };
-
-  /**
-   *
-   * @param newScale 新的缩放比例
-   */
-  const handleScaleChange = (newScale: number) => {
-    setScale(newScale);
-  };
-  /**
    * 刻度尺组件回调
    */
   const handleRulerChange = useCallback(
     (values: { scale: number; rotate: number }) => {
-      console.log("type,value", values);
-      // if (type === "scale") {
-      //   handleScaleChange(value);
-      // } else if (type === "rotate") {
-      //   handleRotationChange(value);
-      // }
+      setScale(values.scale);
+      setRotate(values.rotate);
     },
     []
   );
@@ -133,38 +111,45 @@ const ImageCropModal: React.FC<Props> = ({
     const cropScale = (scale * 100) / widthRatio;
     setCropWidthScale(cropScale);
   }; */
-  /**
-   * 处理图片加载
-   */
-  /*   const handleImageLoad = () => {
-    if (!imageRef || !imageRef.current) return;
-    const image = imageRef.current;
-    const container = containerRef.current;
-    if (!container) return;
-    //获取图片的宽高
-    const imageWidth = image.naturalWidth;
-    const imageHeight = image.naturalHeight;
-    //获取容器的宽高
-    const containerWidth = container.offsetWidth;
-    const containerHeight = container.offsetHeight;
-    //计算缩放比例
-    const widthRatio = containerWidth / imageWidth;
-    const heightRatio = containerHeight / imageHeight;
-    //图片应该缩放的比例
-    const scale = Math.min(widthRatio, heightRatio);
-    //裁剪组件宽度缩放比例
-    const cropScale = (scale * 100) / widthRatio;
-    setCropWidthScale(cropScale);
+
+  //确认裁剪
+  /* const handleConfirm = () => {
+    if (!imageRef || !crop.width || !crop.height) return;
+
+    const offscreenCanvas = new OffscreenCanvas(crop.width, crop.height);
+    const ctx = offscreenCanvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.translate(crop.width / 2, crop.height / 2);
+    ctx.rotate((rotate * Math.PI) / 180);
+    ctx.drawImage(
+      imageRef.current!,
+      crop.x,
+      crop.y,
+      crop.width,
+      crop.height,
+      -crop.width / 2,
+      -crop.height / 2,
+      crop.width,
+      crop.height
+    );
+
+    offscreenCanvas.toBlob((blob) => {
+      const newImageUrl = URL.createObjectURL(blob);
+      // 处理新生成的 URL
+    });
+
+    onChange(newImageUrl);
+    handleClose();
   }; */
-  /**
-   * 关闭模态框
-   */
+
+  //关闭模态框
   const handleClose = () => {
     onClose();
   };
   //模态框打开后，设置图片地址
   const handleAfterOpen = () => {
-    setImageSrc(imageUrl);
+    setImageSrc(imageFile?.src || "");
   };
   //模态框关闭后，重置裁剪范围
   const handleAfterClose = () => {
@@ -211,7 +196,7 @@ const ImageCropModal: React.FC<Props> = ({
           </div>
         </div>
 
-        <div className="mt-4">
+        <div className="my-4">
           <div className="flex flex-col  items-center justify-center">
             <Ruler
               scale={{
@@ -228,14 +213,6 @@ const ImageCropModal: React.FC<Props> = ({
               }}
               onChange={handleRulerChange}
             />
-          </div>
-          <div className="flex justify-center mt-4">
-            <button
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium focus:outline-none"
-              onClick={() => ({})}
-            >
-              Confirm
-            </button>
           </div>
         </div>
       </div>

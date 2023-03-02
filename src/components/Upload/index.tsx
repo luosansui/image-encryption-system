@@ -4,7 +4,7 @@ import Dropzone from "react-dropzone";
 import pLimit from "p-limit";
 import { produce } from "immer";
 import { FileType } from "@/components/Upload/type";
-import ImageCropModal from "../Image";
+import ImageCropModal from "../ImageCrop";
 
 const Upload: React.FC<{
   list?: FileType[];
@@ -16,7 +16,7 @@ const Upload: React.FC<{
   //打开图片裁剪模态框
   const [isModalOpen, setIsModalOpen] = useState(false);
   //要编辑的图片链接
-  const [editImageUrl, setEditImageUrl] = useState<string>("");
+  const [editImageFile, setEditImageFile] = useState<FileType | null>(null);
   //当外部传入的list时，该组件为受控组件
   useEffect(() => {
     if (list !== undefined) {
@@ -86,16 +86,16 @@ const Upload: React.FC<{
   /**
    * 打开图片裁剪模态框
    */
-  const handleOpenModal = (imageUrl: string) => {
+  const handleOpenModal = (image: FileType) => {
     setIsModalOpen(true);
-    setEditImageUrl(imageUrl);
+    setEditImageFile(image);
   };
   /**
    * 关闭图片裁剪模态框
    */
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setEditImageUrl("");
+    setEditImageFile(null);
   };
   return (
     <Fragment>
@@ -134,8 +134,8 @@ const Upload: React.FC<{
             <img
               src={file.src}
               alt={file.file.name}
-              onClick={() => handleOpenModal(file.src)}
-              className="w-full h-32 object-cover rounded border border-gray-200"
+              onClick={() => handleOpenModal(file)}
+              className="w-full h-32 object-cover rounded border border-gray-200 cursor-pointer"
             />
             <button
               className="text-black absolute top-0 right-0"
@@ -162,7 +162,7 @@ const Upload: React.FC<{
         ))}
       </div>
       <ImageCropModal
-        imageUrl={editImageUrl}
+        imageFile={editImageFile}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onChange={(...args) => {
