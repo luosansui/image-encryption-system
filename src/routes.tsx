@@ -1,4 +1,4 @@
-import { Navigate, RouteObject } from "react-router-dom";
+import React, { Navigate, RouteObject } from "react-router-dom";
 import { lazy } from "react";
 const Encryption = lazy(() => import("./pages/encryption"));
 const Steganography = lazy(() => import("./pages/steganography"));

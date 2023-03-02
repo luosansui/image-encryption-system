@@ -7,7 +7,7 @@ import {
 
 import { deserializeFunction } from "@/utils/function";
 //缓存函数;
-let cachedFunction: Function | null = null;
+let cachedFunction: ((...args: any[]) => any) | null = null;
 
 const handle = async (origin: FileType, secretKey: string, MIME: string) => {
   //获取文件buffer

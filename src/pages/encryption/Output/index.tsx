@@ -1,7 +1,6 @@
-import Table from "@/components/Table";
-import { TableData } from "@/components/Table/type";
-import { FileType } from "@/components/Upload/type";
 import React, { Fragment } from "react";
+import Table from "@/components/Table";
+import { FileType } from "@/components/Upload/type";
 import { columns } from "./constant";
 
 export default function Output({

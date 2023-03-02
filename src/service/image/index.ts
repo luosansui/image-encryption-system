@@ -2,7 +2,7 @@ import { FileType } from "@/components/Upload/type";
 import PluginService from "@/service/plugin";
 import { Plugin } from "@/service/plugin/type";
 import { getThreadsNumber } from "@/utils";
-import { FileCache } from "../Cache";
+import { FileCache } from "../cache";
 import WorkService from "../worker";
 import { encryptFuncType, PluginJson, processImageFuncArgsType } from "./type";
 import WorkerThread from "./worker?worker";
@@ -25,14 +25,15 @@ class ImageService {
     const initResultPromise = Array.from(
       modulesKeySet,
       (key) =>
-        new Promise(async (res, rej) => {
-          const pluginJson = (await modules[`${key}.json`]()) as PluginJson;
-          this.loadOtherPlugin({
-            ...pluginJson.default,
-            path: key,
-          })
-            .then(res)
-            .catch(rej);
+        new Promise((res, rej) => {
+          const load = async () => {
+            const pluginJson = (await modules[`${key}.json`]()) as PluginJson;
+            return this.loadOtherPlugin({
+              ...pluginJson.default,
+              path: key,
+            });
+          };
+          load().then(res).catch(rej);
         })
     );
     //插件载入结果

@@ -17,7 +17,7 @@ export default class WorkService {
   //构造函数
   constructor(
     maxWorkers: number,
-    exeFunc: Function,
+    exeFunc: (...args: any[]) => any,
     Script?: new () => Worker
   ) {
     this.maxWorkers = maxWorkers;
@@ -30,18 +30,18 @@ export default class WorkService {
    * @returns 任务结果
    */
   public run<T>(...taskArgs: any[]): Promise<T> {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       const task: Task = { args: taskArgs, resolve, reject };
       this.taskQueue.push(task);
-      await Promise.resolve(0); //保证所有任务先入队列再执行
-      this.tryStartTask();
+      //保证所有任务先入队列再执行
+      Promise.resolve(0).then(() => this.tryStartTask());
     });
   }
   /**
    * 设置worker的工作函数
    * @param exeFunc 传入的函数
    */
-  public setExeFunc(exeFunc: Function) {
+  public setExeFunc(exeFunc: (...args: any[]) => any) {
     this.exeFunc = serializeFunction(exeFunc);
     this.workers.forEach((worker) => {
       worker.postMessage({ func: this.exeFunc });

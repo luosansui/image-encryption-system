@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ImageService from "@/service/image";
 import { Plugin } from "@/service/plugin/type";
 import List from "@/components/List";

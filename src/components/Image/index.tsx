@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Modal from "react-modal";
 import ImageCrop, { Crop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
@@ -71,14 +71,17 @@ const ImageCropModal: React.FC<Props> = ({
   /**
    * 刻度尺组件回调
    */
-  const handleRulerChange = (values: { scale: number; rotate: number }) => {
-    console.log("type,value", values);
-    // if (type === "scale") {
-    //   handleScaleChange(value);
-    // } else if (type === "rotate") {
-    //   handleRotationChange(value);
-    // }
-  };
+  const handleRulerChange = useCallback(
+    (values: { scale: number; rotate: number }) => {
+      console.log("type,value", values);
+      // if (type === "scale") {
+      //   handleScaleChange(value);
+      // } else if (type === "rotate") {
+      //   handleRotationChange(value);
+      // }
+    },
+    []
+  );
   /*  const handleConfirm = () => {
     if (!imageRef || !crop.width || !crop.height) return;
 
@@ -229,7 +232,7 @@ const ImageCropModal: React.FC<Props> = ({
           <div className="flex justify-center mt-4">
             <button
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium focus:outline-none"
-              onClick={() => {}}
+              onClick={() => ({})}
             >
               Confirm
             </button>
