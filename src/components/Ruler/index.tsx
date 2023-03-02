@@ -169,7 +169,12 @@ const Ruler = ({
     }
     //记录当前数值
     valuesRef.current = values;
-    onChange?.(values);
+    //避免小数点后面出现很多位数的情况
+    const scale = 1 + values.scale / 100;
+    onChange?.({
+      scale: Math.round(scale * 100) / 100,
+      rotate: values.rotate,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [values]);
 

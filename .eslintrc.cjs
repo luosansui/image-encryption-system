@@ -18,5 +18,8 @@ module.exports = {
     sourceType: "module",
   },
   plugins: ["react", "@typescript-eslint", "react-hooks", "prettier"], //声明插件，不声明也行
-  rules: {},
+  rules: {
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-non-null-assertion": "off",
+  },
 };
