@@ -1,13 +1,12 @@
-
 .ReactModalPortal .ReactModal__Overlay {
   opacity: 0;
   transition: opacity 250ms ease-in-out;
 }
-.ReactModalPortal .ReactModal__Overlay--after-open{
+.ReactModalPortal .ReactModal__Overlay--after-open {
   opacity: 1;
 }
 
-.ReactModalPortal .ReactModal__Overlay--before-close{
+.ReactModalPortal .ReactModal__Overlay--before-close {
   opacity: 0;
 }
 /* .ReactCrop__child-wrapper{
