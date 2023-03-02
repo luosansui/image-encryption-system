@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Plugin } from "@/service/plugin/type";
 import { capitalizeFirstLetter } from "@/utils/string";
 interface SelectProps {

@@ -1,6 +1,6 @@
+import React, { Fragment, useState } from "react";
 import { NavLink } from "react-router-dom";
 import routes, { CustomRouteObject } from "@/routes";
-import { Fragment, useState } from "react";
 
 const MenuNavLink: React.FC<{ route: CustomRouteObject; zIndex?: number }> = ({
   route,

@@ -1,5 +1,3 @@
-import { ReactNode } from "react";
-
 export interface TableColumn {
   title: string;
   key: string;

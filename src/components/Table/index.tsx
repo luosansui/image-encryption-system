@@ -1,3 +1,4 @@
+import React from "react";
 import { TableProps } from "./type";
 
 function Table({ columns, data }: TableProps) {

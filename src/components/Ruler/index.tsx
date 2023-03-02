@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import produce from "immer";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 interface typeProps {
   min: number;
@@ -13,7 +20,17 @@ interface Props {
   onChange?: (values: { scale: number; rotate: number }) => void;
 }
 
-const Ruler = (prop: Props) => {
+const Ruler = ({
+  scale: defaultScale,
+  rotate: defaultRotate,
+  onChange,
+}: Props) => {
+  /**
+   * 根据刻度计算位置
+   */
+  const getPosition = (type: typeProps) => {
+    return (type.defaultValue - type.min) / (type.max - type.min);
+  };
   //鼠标按下位置
   const mouseDownPosition = useRef<{
     xPos: number;
@@ -24,24 +41,25 @@ const Ruler = (prop: Props) => {
   });
   //刻度尺的ref
   const rulerRef = useRef<HTMLDivElement>(null);
+  //记录当前值来对values做diff
+  const valuesRef = useRef<{
+    scale: number;
+    rotate: number;
+  } | null>(null);
   //正在拖动
   const [dragging, setDragging] = useState(false);
   //正在操作的对象
   const [activeType, setActiveType] = useState<"scale" | "rotate">("scale");
   //当前位置
-  const [position, setPosition] = useState(0);
-  //刻度尺缩放和旋转后的数值
-  const [values, setValues] = useState({
-    scale: 1,
-    rotate: 0,
+  const [position, setPosition] = useState({
+    scale: getPosition(defaultScale),
+    rotate: getPosition(defaultRotate),
   });
   //刻度尺类型
   const typeObj: { key: "scale" | "rotate"; name: string }[] = [
     { key: "scale", name: "缩放" },
     { key: "rotate", name: "旋转" },
   ];
-  //const [scrollPosition, setScrollPosition] = useState(0);
-
   /**
    * 鼠标按下，开始拖动
    * @param event 事件对象
@@ -57,35 +75,41 @@ const Ruler = (prop: Props) => {
   /**
    * 鼠标松开，停止拖动
    */
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     setDragging(false);
-  };
+  }, []);
   /**
    * 鼠标移动
    * @param event 事件对象
    */
-  const handleMouseMove = (event: MouseEvent) => {
-    if (dragging && rulerRef.current && mouseDownPosition.current) {
-      //刻度尺位置
-      const { width: nodeWidth } = rulerRef.current.getBoundingClientRect();
-      //鼠标位置
-      const { xPos } = mouseDownPosition.current;
-      const { clientX, clientY } = event;
-      //鼠标移动距离
-      const offsetX = xPos - clientX;
-      //鼠标移动距离占刻度尺宽度的百分比
-      const percentage = Math.max(
-        0,
-        Math.min(1, position + offsetX / nodeWidth)
-      );
-      setPosition(percentage);
-      //更新当前鼠标点击位置
-      mouseDownPosition.current = {
-        xPos: clientX,
-        yPos: clientY,
-      };
-    }
-  };
+  const handleMouseMove = useCallback(
+    (event: MouseEvent) => {
+      if (dragging && rulerRef.current && mouseDownPosition.current) {
+        //刻度尺位置
+        const { width: nodeWidth } = rulerRef.current.getBoundingClientRect();
+        //鼠标位置
+        const { xPos } = mouseDownPosition.current;
+        const { clientX, clientY } = event;
+        //鼠标移动距离
+        const offsetX = xPos - clientX;
+        //当前类型对应的位置
+        const posi = position[activeType];
+        //鼠标移动距离占刻度尺宽度的百分比
+        const percentage = Math.max(0, Math.min(1, posi + offsetX / nodeWidth));
+        setPosition(
+          produce((draft) => {
+            draft[activeType] = percentage;
+          })
+        );
+        //更新当前鼠标点击位置
+        mouseDownPosition.current = {
+          xPos: clientX,
+          yPos: clientY,
+        };
+      }
+    },
+    [activeType, dragging, position]
+  );
 
   useEffect(() => {
     if (dragging) {
@@ -104,43 +128,49 @@ const Ruler = (prop: Props) => {
   /**
    * 切换刻度尺类型
    */
-  const handleTypeChange = (type: "scale" | "rotate") => {
-    //读取将要切换的类型的默认刻度
-    const willSetType = prop[type];
-    //用记录的值和默认刻度计算当前位置
-    const percent =
-      (values[type] - willSetType.min) / (willSetType.max - willSetType.min);
-    setPosition(percent);
-    setActiveType(type);
+  const handleTypeChange = (option: "scale" | "rotate") => {
+    setActiveType(option);
   };
 
   /**
-   * 根据组件收到的参数计算当前位置
+   * 根据当前位置和类型计算当前数值
    */
-  useEffect(() => {
-    const type = prop[activeType];
-    const percent = (type.defaultValue - type.min) / (type.max - type.min);
-    setPosition(percent);
-  }, [prop.rotate, prop.scale]);
-
-  /**
-   * 根据当前位置计算当前数值
-   */
-  useEffect(() => {
-    const type = prop[activeType];
-    const value = Math.round(position * (type.max - type.min) + type.min);
-    //记录当前数值
-    setValues({
-      ...values,
-      [activeType]: value,
-    });
-  }, [position]);
+  const values = useMemo(() => {
+    const scaleValue = Math.round(
+      position["scale"] * (defaultScale.max - defaultScale.min) +
+        defaultScale.min
+    );
+    const rotateValue = Math.round(
+      position["rotate"] * (defaultRotate.max - defaultRotate.min) +
+        defaultRotate.min
+    );
+    return {
+      scale: scaleValue,
+      rotate: rotateValue,
+    };
+  }, [
+    defaultRotate.max,
+    defaultRotate.min,
+    defaultScale.max,
+    defaultScale.min,
+    position,
+  ]);
 
   /**
    * 触发回调函数
    */
   useEffect(() => {
-    prop.onChange?.(values);
+    //如果当前值和上一次值相同，不触发回调
+    if (
+      values.rotate === valuesRef.current?.rotate &&
+      values.scale === valuesRef.current?.scale
+    ) {
+      return;
+    }
+    //记录当前数值
+    valuesRef.current = values;
+    onChange?.(values);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [values]);
 
   return (
@@ -155,10 +185,10 @@ const Ruler = (prop: Props) => {
           <div className="z-10 absolute inset-x-1/2 h-1/4 top-[2%] w-[1px] bg-gray-400"></div>
           <div className="z-10 absolute px-10 text-sm left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-transparent via-white to-transparent">
             {values[activeType]}
-            {prop[activeType].suffix}
+            {(activeType === "scale" ? defaultScale : defaultRotate).suffix}
           </div>
           <div
-            style={{ transform: `translateX(${-position * 100}%)` }}
+            style={{ transform: `translateX(${-position[activeType] * 100}%)` }}
             className="transition-all duration-75 h-[56px] w-[404px]"
           >
             <div className="absolute left-1/2" ref={rulerRef}>
@@ -173,7 +203,7 @@ const Ruler = (prop: Props) => {
                 <path d="M202 24 l2 3 l-2 -1 l-2 1 z"></path>
                 <rect rx="4" ry="4" y="24" height="8"></rect>
                 <path
-                  fill-rule="evenodd"
+                  fillRule="evenodd"
                   d="M 0 28 a 2 2 0 1 0 0 -1 M 11.25 28 a 0.75 0.75 0 1 0 0 -1 M 21.25 28 a 0.75 0.75 0 1 0 0 -1 M 31.25 28 a 0.75 0.75 0 1 0 0 -1 M 41.25 28 a 0.75 0.75 0 1 0 0 -1 M 50 28 a 2 2 0 1 0 0 -1 M 61.25 28 a 0.75 0.75 0 1 0 0 -1 M 71.25 28 a 0.75 0.75 0 1 0 0 -1 M 81.25 28 a 0.75 0.75 0 1 0 0 -1 M 91.25 28 a 0.75 0.75 0 1 0 0 -1 M 100 28 a 2 2 0 1 0 0 -1 M 111.25 28 a 0.75 0.75 0 1 0 0 -1 M 121.25 28 a 0.75 0.75 0 1 0 0 -1 M 131.25 28 a 0.75 0.75 0 1 0 0 -1 M 141.25 28 a 0.75 0.75 0 1 0 0 -1 M 150 28 a 2 2 0 1 0 0 -1 M 161.25 28 a 0.75 0.75 0 1 0 0 -1 M 171.25 28 a 0.75 0.75 0 1 0 0 -1 M 181.25 28 a 0.75 0.75 0 1 0 0 -1 M 191.25 28 a 0.75 0.75 0 1 0 0 -1 M 200 28 a 2 2 0 1 0 0 -1 M 211.25 28 a 0.75 0.75 0 1 0 0 -1 M 221.25 28 a 0.75 0.75 0 1 0 0 -1 M 231.25 28 a 0.75 0.75 0 1 0 0 -1 M 241.25 28 a 0.75 0.75 0 1 0 0 -1 M 250 28 a 2 2 0 1 0 0 -1 M 261.25 28 a 0.75 0.75 0 1 0 0 -1 M 271.25 28 a 0.75 0.75 0 1 0 0 -1 M 281.25 28 a 0.75 0.75 0 1 0 0 -1 M 291.25 28 a 0.75 0.75 0 1 0 0 -1 M 300 28 a 2 2 0 1 0 0 -1 M 311.25 28 a 0.75 0.75 0 1 0 0 -1 M 321.25 28 a 0.75 0.75 0 1 0 0 -1 M 331.25 28 a 0.75 0.75 0 1 0 0 -1 M 341.25 28 a 0.75 0.75 0 1 0 0 -1 M 350 28 a 2 2 0 1 0 0 -1 M 361.25 28 a 0.75 0.75 0 1 0 0 -1 M 371.25 28 a 0.75 0.75 0 1 0 0 -1 M 381.25 28 a 0.75 0.75 0 1 0 0 -1 M 391.25 28 a 0.75 0.75 0 1 0 0 -1 M 400 28 a 2 2 0 1 0 0 -1"
                 ></path>
               </svg>

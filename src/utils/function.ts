@@ -3,7 +3,9 @@
  * @param func 函数
  * @returns ArrayBuffer
  */
-export const serializeFunction = (func: Function): ArrayBuffer => {
+export const serializeFunction = (
+  func: (...args: any[]) => any
+): ArrayBuffer => {
   const funcString = func.toString();
   const encoder = new TextEncoder();
   const funcData = encoder.encode(funcString);
@@ -14,7 +16,9 @@ export const serializeFunction = (func: Function): ArrayBuffer => {
  * @param buffer ArrayBuffer
  * @returns 函数
  */
-export const deserializeFunction = (buffer: ArrayBuffer): Function => {
+export const deserializeFunction = (
+  buffer: ArrayBuffer
+): ((...args: any[]) => any) => {
   const data = new Uint8Array(buffer);
   const decoder = new TextDecoder("utf-8");
   const funcString = decoder.decode(data);

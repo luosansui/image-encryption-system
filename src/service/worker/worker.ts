@@ -1,6 +1,6 @@
 import { deserializeFunction } from "@/utils/function";
 //缓存函数;
-let cachedFunction: Function | null = null;
+let cachedFunction: ((...args: any[]) => any) | null = null;
 //注册监听事件
 self.addEventListener(
   "message",
