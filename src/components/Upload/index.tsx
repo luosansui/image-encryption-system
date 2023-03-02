@@ -8,14 +8,14 @@ import ImageCropModal from "../ImageCrop";
 
 const Upload: React.FC<{
   list?: FileType[];
-  onAdd?: (files: FileType[]) => void;
+  onAdd?: (files: FileType[], insertIndex: number) => void;
   onRemove?: (revoke: (url: string) => void, md5: string) => void; //第一个参数revoke是为了显式的告诉外部需要释放url资源
   className?: string;
 }> = ({ list, onAdd, onRemove, className }) => {
   const [files, setFiles] = useState<FileType[]>(list || []);
   //打开图片裁剪模态框
   const [isModalOpen, setIsModalOpen] = useState(false);
-  //要编辑的图片链接
+  //要编辑的图片
   const [editImageFile, setEditImageFile] = useState<FileType | null>(null);
   //当外部传入的list时，该组件为受控组件
   useEffect(() => {
@@ -52,17 +52,25 @@ const Upload: React.FC<{
   }
 
   const handleDrop = async (acceptedFiles: File[]) => {
+    handleAdd(acceptedFiles);
+  };
+
+  const handleAdd = async (
+    acceptedFiles: File[],
+    insertIndex = files.length - 1
+  ) => {
     const newFiles = await filterDuplicateFiles(acceptedFiles);
     //当外部没有传入的list时，该组件为非受控组件，直接更新状态
     if (list === undefined) {
+      console.log("[[非受控组件]]: Add File");
       setFiles(
         produce((draftState) => {
-          draftState.push(...newFiles);
+          draftState.splice(insertIndex, 0, ...newFiles);
         })
       );
     }
     //通知外部变更
-    onAdd?.(newFiles);
+    onAdd?.(newFiles, insertIndex);
   };
 
   const handleRemove = (md5: string) => {
@@ -83,6 +91,15 @@ const Upload: React.FC<{
     //通知外部变更
     onRemove?.(URL.revokeObjectURL, md5);
   };
+  /**
+   * 图片裁剪模态框关闭回调
+   */
+  const handleImageCropChange = (cropFile: File, originMD5: string) => {
+    const index = files.findIndex((file) => file.md5 === originMD5);
+    handleRemove(originMD5);
+    handleAdd([cropFile], index);
+  };
+
   /**
    * 打开图片裁剪模态框
    */
@@ -165,9 +182,7 @@ const Upload: React.FC<{
         imageFile={editImageFile}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        onChange={(...args) => {
-          console.log(...args);
-        }}
+        onChange={handleImageCropChange}
       />
     </Fragment>
   );
