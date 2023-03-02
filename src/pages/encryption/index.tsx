@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { produce } from "immer";
 import ControlPanel from "@/pages/encryption/ControlPanel";
 import Upload from "@/components/Upload";
@@ -12,10 +12,10 @@ export default function Encryption() {
   /**
    * 新增上传文件
    */
-  const handleFileListAdd = (files: FileType[]) => {
+  const handleFileListAdd = (files: FileType[], insertIndex: number) => {
     setFileList(
       produce((draftState) => {
-        draftState.push(...files);
+        draftState.splice(insertIndex, 0, ...files);
       })
     );
   };
@@ -29,7 +29,6 @@ export default function Encryption() {
     }
     const file = fileList[fileIndex];
     revoke(file.src);
-    console.log("[[受控组件]]: Remove File");
     setFileList(
       produce((draft) => {
         draft.splice(fileIndex, 1);
