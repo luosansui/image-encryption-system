@@ -1,10 +1,22 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Modal from "react-modal";
-import ImageCrop, { Crop } from "react-image-crop";
+import ImageCrop, {
+  centerCrop,
+  Crop,
+  makeAspectCrop,
+  PixelCrop,
+} from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 import "./index.css";
 import Ruler from "../Ruler";
 import { FileType } from "../Upload/type";
+import produce from "immer";
 Modal.setAppElement("#root");
 
 interface ModalContentProps {
@@ -24,21 +36,12 @@ const ModalContent: React.FC<ModalContentProps> = ({
   onClose,
   onChange,
 }) => {
-  const initCrop: {
-    unit: "%" | "px";
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  } = {
-    unit: "%",
-    x: 25,
-    y: 25,
-    width: 50,
-    height: 50,
-  };
-  //预设裁剪范围
-  const [crop, setCrop] = useState<Crop>(initCrop);
+  //裁剪范围
+  const [crop, setCrop] = useState<Crop>();
+  //裁剪完成后的Crop
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+  //裁剪比例
+  const [aspect, setAspect] = useState<number | undefined>(undefined);
   //缩放比例
   const [scale, setScale] = useState(1);
   //旋转角度
@@ -51,6 +54,13 @@ const ModalContent: React.FC<ModalContentProps> = ({
    */
   const handleCropChange = (newCrop: Crop) => {
     setCrop(newCrop);
+  };
+  /**
+   *
+   * @param crop 裁剪完成后的Crop
+   */
+  const handleCropComplete = (crop: PixelCrop) => {
+    setCompletedCrop(crop);
   };
   /**
    * 刻度尺组件回调
@@ -66,27 +76,29 @@ const ModalContent: React.FC<ModalContentProps> = ({
    * 确认裁剪
    */
   const handleConfirm = async () => {
-    if (!imageFile || !crop.width || !crop.height) return;
-
-    const offscreenCanvas = new OffscreenCanvas(crop.width, crop.height);
+    if (!imageFile || !completedCrop) return;
+    const offscreenCanvas = new OffscreenCanvas(
+      completedCrop.width,
+      completedCrop.height
+    );
     const ctx = offscreenCanvas.getContext(
       "2d"
     ) as OffscreenCanvasRenderingContext2D;
 
     if (!ctx) return;
-    ctx.translate(crop.width / 2, crop.height / 2);
+    ctx.translate(completedCrop.width / 2, completedCrop.height / 2);
     ctx.rotate((rotate * Math.PI) / 180);
     const img = await createImageBitmap(imageFile.file);
     ctx.drawImage(
       img,
-      crop.x,
-      crop.y,
-      crop.width,
-      crop.height,
-      -crop.width / 2,
-      -crop.height / 2,
-      crop.width,
-      crop.height
+      completedCrop.x,
+      completedCrop.y,
+      completedCrop.width,
+      completedCrop.height,
+      -completedCrop.width / 2,
+      -completedCrop.height / 2,
+      completedCrop.width,
+      completedCrop.height
     );
 
     const blob = await (offscreenCanvas as any).convertToBlob({
@@ -99,14 +111,101 @@ const ModalContent: React.FC<ModalContentProps> = ({
     onClose?.();
   };
 
-  //完成裁剪
+  //取消裁剪
   const handleCancel = () => {
     onClose?.();
   };
+
+  //切换裁剪比例锁定
+  const handleToggleAspectLock = () => {
+    if (aspect) {
+      setAspect(undefined);
+    } else if (imageRef.current) {
+      const { width, height } = imageRef.current;
+      const imageAspect = width / height;
+      setAspect(imageAspect);
+      setCrop(
+        produce((draft) => {
+          if (draft) {
+            draft.width = imageAspect * draft.height;
+          }
+        })
+      );
+    }
+  };
+  /**
+   * 获取居中Crop
+   */
+  const centerAspectCrop = (
+    mediaWidth: number,
+    mediaHeight: number,
+    aspect: number
+  ) => {
+    return centerCrop(
+      makeAspectCrop(
+        {
+          unit: "%",
+          width: 90,
+        },
+        aspect,
+        mediaWidth,
+        mediaHeight
+      ),
+      mediaWidth,
+      mediaHeight
+    );
+  };
+
+  /**
+   * 图片加载
+   */
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { width, height } = e.currentTarget;
+    //图片纵横比
+    const imageAspect = width / height;
+    //设置裁剪区域
+    setCrop(centerAspectCrop(width, height, imageAspect));
+    //设置保持纵横比
+    setAspect(imageAspect);
+  };
+
   return (
     <div className="h-full p-4 flex flex-col">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-bold">裁剪图片</h2>
+        <div className="flex items-center">
+          <span className="text-lg font-bold mr-2">裁剪图片</span>
+          {aspect ? (
+            <svg
+              onClick={handleToggleAspectLock}
+              className="icon"
+              viewBox="0 0 1024 1024"
+              version="1.1"
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+            >
+              <path
+                d="M365.714286 438.857143l292.571429 0 0-109.714286q0-60.562286-42.861714-103.424t-103.424-42.861714-103.424 42.861714-42.861714 103.424l0 109.714286zM841.142857 493.714286l0 329.142857q0 22.820571-16.018286 38.838857t-38.838857 16.018286l-548.571429 0q-22.820571 0-38.838857-16.018286t-16.018286-38.838857l0-329.142857q0-22.820571 16.018286-38.838857t38.838857-16.018286l18.285714 0 0-109.714286q0-105.179429 75.410286-180.589714t180.589714-75.410286 180.589714 75.410286 75.410286 180.589714l0 109.714286 18.285714 0q22.820571 0 38.838857 16.018286t16.018286 38.838857z"
+                fill="#444444"
+              ></path>
+            </svg>
+          ) : (
+            <svg
+              onClick={handleToggleAspectLock}
+              className="icon"
+              viewBox="0 0 1024 1024"
+              version="1.1"
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+            >
+              <path
+                d="M365.714286 438.857143l292.571429 0 0-109.714286q0-60.562286-42.861714-103.424t-103.424-42.861714-103.424 42.861714-42.861714 103.424l0 109.714286zM841.142857 493.714286l0 329.142857q0 22.820571-16.018286 38.838857t-38.838857 16.018286l-548.571429 0q-22.820571 0-38.838857-16.018286t-16.018286-38.838857l0-329.142857q0-22.820571 16.018286-38.838857t38.838857-16.018286l18.285714 0 0-54.857143q0-22.820571 16.018286-38.838857t38.838857-16.018286l73.142857 0 0-54.857143q0-22.820571 16.018286-38.838857t38.838857-16.018286l73.142857 0q22.820571 0 38.838857 16.018286t16.018286 38.838857l0 54.857143 73.142857 0q22.820571 0 38.838857 16.018286t16.018286 38.838857z"
+                fill="#444444"
+              />
+            </svg>
+          )}
+        </div>
         <div>
           <button
             className="text-black text-sm hover:bg-gray-200 border border-gray-300 cursor-pointer px-3 py-1 rounded-full mr-3"
@@ -129,13 +228,15 @@ const ModalContent: React.FC<ModalContentProps> = ({
             crop={crop}
             className="align-bottom m-auto"
             onChange={handleCropChange}
-            onComplete={handleCropChange}
+            onComplete={handleCropComplete}
             minHeight={10}
             minWidth={10}
+            aspect={aspect}
           >
             <img
               ref={imageRef}
               src={imageFile?.src}
+              onLoad={handleImageLoad}
               style={{ transform: `scale(${scale}) rotate(${rotate}deg)` }}
             />
           </ImageCrop>
