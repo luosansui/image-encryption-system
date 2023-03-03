@@ -1,5 +1,5 @@
 import { FileType } from "@/components/Upload/type";
-
+//文件缓存服务
 export class FileCache {
   private cache: WeakSet<FileType> = new WeakSet();
 
