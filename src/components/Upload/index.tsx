@@ -27,17 +27,22 @@ const Upload: React.FC<{
   /**
    * 过滤重复文件
    * @param files 文件列表
+   * @param acceptedMD5s 已经计算的md5列表
    * @returns 不重复的文件列表
    */
-  async function filterDuplicateFiles(fileList: File[]) {
+  async function filterDuplicateFiles(
+    fileList: File[],
+    acceptedMD5s: string[]
+  ) {
     const limit = pLimit(3);
     const uniqueFiles: FileType[] = [];
     //当前所有文件的md5集合
     const fileHashSet = new Set(files.map((file) => file.md5));
     await Promise.all(
-      fileList.map(async (file) => {
+      fileList.map(async (file, index) => {
         try {
-          const md5 = await limit(() => calculateMD5(file));
+          const md5 =
+            acceptedMD5s[index] ?? (await limit(() => calculateMD5(file)));
           if (!fileHashSet.has(md5)) {
             fileHashSet.add(md5);
             const src = URL.createObjectURL(file);
@@ -57,9 +62,10 @@ const Upload: React.FC<{
 
   const handleAdd = async (
     acceptedFiles: File[],
-    insertIndex = files.length - 1
+    acceptedMD5s: string[] = [],
+    insertIndex = files.length
   ) => {
-    const newFiles = await filterDuplicateFiles(acceptedFiles);
+    const newFiles = await filterDuplicateFiles(acceptedFiles, acceptedMD5s);
     //当外部没有传入的list时，该组件为非受控组件，直接更新状态
     if (list === undefined) {
       console.log("[[非受控组件]]: Add File");
@@ -94,10 +100,14 @@ const Upload: React.FC<{
   /**
    * 图片裁剪模态框关闭回调
    */
-  const handleImageCropChange = (cropFile: File, originMD5: string) => {
+  const handleImageCropChange = async (cropFile: File, originMD5: string) => {
+    const md5 = await calculateMD5(cropFile);
+    if (md5 === originMD5) {
+      return;
+    }
     const index = files.findIndex((file) => file.md5 === originMD5);
     handleRemove(originMD5);
-    handleAdd([cropFile], index);
+    handleAdd([cropFile], [md5], index);
   };
 
   /**

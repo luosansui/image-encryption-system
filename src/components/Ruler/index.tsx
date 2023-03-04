@@ -1,3 +1,4 @@
+import { shallowEqual } from "@/utils/object";
 import produce from "immer";
 import React, {
   useCallback,
@@ -5,6 +6,7 @@ import React, {
   useMemo,
   useRef,
   useState,
+  memo,
 } from "react";
 
 interface typeProps {
@@ -15,15 +17,20 @@ interface typeProps {
 }
 //不同类型刻度尺的刻度值
 interface Props {
-  scale: typeProps;
-  rotate: typeProps;
+  defaultScale: typeProps;
+  defaultRotate: typeProps;
   onChange?: (values: { scale: number; rotate: number }) => void;
+  forceValue?: {
+    scale?: number;
+    rotate?: number;
+  };
 }
 
 const Ruler = ({
-  scale: defaultScale,
-  rotate: defaultRotate,
+  defaultScale,
+  defaultRotate,
   onChange,
+  forceValue,
 }: Props) => {
   /**
    * 根据刻度计算位置
@@ -178,6 +185,29 @@ const Ruler = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [values]);
 
+  /**
+   * 外部传入的scale和rotate变更会引起内部scale和rotate变化
+   * 由于组件已在外部做diff，所以可以直接监听两对象变化
+   */
+  useEffect(() => {
+    setPosition(
+      produce((draft) => {
+        if (forceValue?.scale !== undefined) {
+          draft.scale = getPosition({
+            ...defaultScale,
+            defaultValue: forceValue.scale,
+          });
+        }
+        if (forceValue?.rotate !== undefined) {
+          draft.rotate = getPosition({
+            ...defaultRotate,
+            defaultValue: forceValue.rotate,
+          });
+        }
+      })
+    );
+  }, [forceValue, defaultScale, defaultRotate]);
+
   return (
     <>
       <div
@@ -235,4 +265,11 @@ const Ruler = ({
   );
 };
 
-export default Ruler;
+export default memo(Ruler, (prevProps, nextProps) => {
+  return (
+    shallowEqual(prevProps.defaultRotate, nextProps.defaultRotate) &&
+    shallowEqual(prevProps.defaultScale, nextProps.defaultScale) &&
+    prevProps.onChange === nextProps.onChange &&
+    prevProps.forceValue === nextProps.forceValue
+  );
+});

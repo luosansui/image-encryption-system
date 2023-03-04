@@ -103,3 +103,25 @@ export async function pixelsBuffer2File(
   const blob = await (offscreenCanvas as any).convertToBlob({ type });
   return new File([blob], name, { type: blob.type });
 }
+/**
+ *
+ * @param file File格式图像文件
+ * @returns Image图像对象
+ */
+export const file2Image = (file: File): Promise<HTMLImageElement> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = (event) => {
+      const image = new Image();
+      image.src = event.target?.result as string;
+      image.onload = () => {
+        resolve(image);
+      };
+      image.onerror = reject;
+    };
+
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
