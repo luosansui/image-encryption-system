@@ -77,16 +77,18 @@ const ModalContent: React.FC<ModalContentProps> = ({
    */
   const handleConfirm = async () => {
     if (!imageFile || !imageRef.current || !completedCrop) return;
-    //如果没有裁剪范围则直接关闭弹框
+    //如果没有裁剪范围则取消裁剪
     const { width, height } = imageRef.current;
     if (
       !completedCrop ||
+      completedCrop.width === 0 ||
+      completedCrop.height === 0 ||
       (completedCrop.width === width &&
         completedCrop.height === height &&
         scale === 1 &&
         rotate === 0)
     ) {
-      onClose?.();
+      handleCancel();
       return;
     }
     //获取绘制完成的canvas
