@@ -101,6 +101,7 @@ const ModalContent: React.FC<ModalContentProps> = ({
     );
     const blob = await (offscreenCanvas as any).convertToBlob({
       type: imageFile.file.type || "image/png",
+      quality: 1,
     });
     const file = new File([blob], imageFile.file.name ?? "image.png", {
       type: blob.type,

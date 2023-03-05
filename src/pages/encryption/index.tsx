@@ -56,25 +56,29 @@ export default function Encryption() {
    */
   const isProgressShow = useMemo(() => progress > 0, [progress]);
   return (
-    <div className="flex h-full">
-      <div className="min-w-[300px] flex-1 flex flex-col">
-        <div className="flex-1 p-2 border-2 border-gray-200 rounded-lg">
-          <div className="relative h-full w-full overflow-y-auto overflow-x-hidden">
-            <Upload
-              className="absolute w-full select-none"
-              list={fileList}
-              onAdd={handleFileListAdd}
-              onRemove={handleFileListRemove}
-            ></Upload>
-          </div>
+    <div className="h-full grid grid-rows-2 grid-cols-[minmax(300px,auto)_400px] gap-3">
+      <div className="border-2 border-gray-200 rounded-lg p-2">
+        <div className="relative h-full w-full overflow-y-auto overflow-x-hidden">
+          <Upload
+            className="absolute w-full select-none"
+            list={fileList}
+            onAdd={handleFileListAdd}
+            onRemove={handleFileListRemove}
+          ></Upload>
         </div>
-        <div className="flex-1 p-2 mt-3 border-2 border-gray-200 rounded-lg overflow-y-auto overflow-x-hidden">
-          <div className="relative h-full w-full overflow-y-auto overflow-x-hidden">
-            <OutPut
-              pairList={filePair}
-              className="absolute w-full h-full select-none"
-            />
-          </div>
+      </div>
+      <div className="border-2 border-gray-200 rounded-lg p-2">
+        <div className="relative h-full w-full overflow-y-auto overflow-x-hidden">
+          <ControlPanel
+            fileList={fileList}
+            handleGenerateResult={handleGenerateResult}
+            className="absolute w-full select-none"
+          />
+        </div>
+      </div>
+      <div className="flex flex-col">
+        <div className="flex-1 border-2 rounded-lg overflow-hidden">
+          <OutPut pairList={filePair} />
         </div>
         <div
           className={`p-2 mt-3 border-2 border-gray-200 shadow-sm rounded-lg ${
@@ -84,13 +88,30 @@ export default function Encryption() {
           <ProgressBar progress={progress} />
         </div>
       </div>
-      <div className="w-[400px] h-full ml-4 p-2 border-2 border-gray-200 rounded-lg">
-        {/* 控制区 */}
-        <ControlPanel
-          fileList={fileList}
-          handleGenerateResult={handleGenerateResult}
-        />
-      </div>
+      <div className="border-2 border-gray-200 rounded-lg p-4">图像直方图</div>
     </div>
   );
 }
+
+/**
+ * <div className="min-w-[300px] flex-1 flex flex-col">
+        <div className="flex-1 p-2 mb-3 border-2 border-gray-200 rounded-lg">
+          
+        </div>
+        <div className="flex-1 flex flex-col">
+
+          
+
+          
+        </div>
+      </div>
+      <div className="w-[400px] ml-3 flex flex-col">
+        <div className="flex-1 mb-3 p-4 border-2 border-gray-200 rounded-lg">
+     
+          
+        </div>
+        <div className="flex-1 p-2 border-2 border-gray-200 rounded-lg ">
+          
+        </div>
+      </div>
+ */

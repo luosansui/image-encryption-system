@@ -31,8 +31,10 @@ export default function Output({
 
   return (
     <Fragment>
-      <div className={`overflow-auto rounded-md ${className ?? ""}`}>
-        <Table columns={columns} data={generateData()}></Table>
+      <div className="relative w-full h-full">
+        <div className="absolute w-full h-full overflow-x-hidden overflow-y-auto">
+          <Table columns={columns} data={generateData()}></Table>
+        </div>
       </div>
     </Fragment>
   );

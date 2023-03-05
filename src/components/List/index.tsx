@@ -46,7 +46,7 @@ const Select: React.FC<SelectProps> = ({ options, className, onChange }) => {
     <div ref={selectRef} className={`relative ${className ?? ""}`}>
       <button
         type="button"
-        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full px-2 py-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+        className="bg-gray-50 border border-gray-300 text-gray-600 text-sm font-semibold rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full px-2 py-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className="block truncate">{options[selectedOption]?.name}</span>
