@@ -100,7 +100,10 @@ export async function pixelsBuffer2File(
     "2d"
   ) as OffscreenCanvasRenderingContext2D;
   ctx.putImageData(imageData, 0, 0);
-  const blob = await (offscreenCanvas as any).convertToBlob({ type });
+  const blob = await (offscreenCanvas as any).convertToBlob({
+    type,
+    quality: 1,
+  });
   return new File([blob], name, { type: blob.type });
 }
 /**
