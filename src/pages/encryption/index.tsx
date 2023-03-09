@@ -5,6 +5,7 @@ import Upload from "@/components/Upload";
 import { FileType } from "@/components/Upload/type";
 import ProgressBar from "@/components/ProgressBar";
 import OutPut from "./Output";
+import TableControl from "./TableControl";
 
 export default function Encryption() {
   const [fileList, setFileList] = useState<FileType[]>([]);
@@ -56,7 +57,7 @@ export default function Encryption() {
    */
   const isProgressShow = useMemo(() => progress > 0, [progress]);
   return (
-    <div className="h-full grid grid-rows-2 grid-cols-[minmax(300px,auto)_400px] gap-3">
+    <div className="h-full grid grid-rows-2 grid-cols-[minmax(300px,auto)_minmax(300px,400px)] gap-3">
       <div className="border-2 border-gray-200 rounded-lg p-2">
         <div className="relative h-full w-full overflow-y-auto overflow-x-hidden">
           <Upload
@@ -88,7 +89,9 @@ export default function Encryption() {
           <ProgressBar progress={progress} />
         </div>
       </div>
-      <div className="border-2 border-gray-200 rounded-lg p-4">图像直方图</div>
+      <div className="border-2 border-gray-200 rounded-lg p-4">
+        <TableControl />
+      </div>
     </div>
   );
 }

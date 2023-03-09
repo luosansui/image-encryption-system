@@ -5,7 +5,6 @@ import { columns } from "./constant";
 
 export default function Output({
   pairList,
-  className,
 }: {
   pairList: [FileType, FileType][];
   className?: string;
@@ -32,7 +31,7 @@ export default function Output({
   return (
     <Fragment>
       <div className="relative w-full h-full">
-        <div className="absolute w-full h-full overflow-x-hidden overflow-y-auto">
+        <div className="absolute w-full h-full overflow-y-auto">
           <Table columns={columns} data={generateData()}></Table>
         </div>
       </div>
