@@ -1,5 +1,5 @@
 import { calculateMD5 } from "@/utils/file";
-import React, { Fragment, useEffect, useState } from "react";
+import React, { Fragment, useEffect, useRef, useState } from "react";
 import Dropzone from "react-dropzone";
 import pLimit from "p-limit";
 import { produce } from "immer";
@@ -13,6 +13,8 @@ const Upload: React.FC<{
   className?: string;
 }> = ({ list, onAdd, onRemove, className }) => {
   const [files, setFiles] = useState<FileType[]>(list || []);
+  //保存当前文件的MD5集合，用于过滤重复文件
+  const fileHashSet = useRef(new Set<string>());
   //打开图片裁剪模态框
   const [isModalOpen, setIsModalOpen] = useState(false);
   //要编辑的图片
@@ -24,37 +26,34 @@ const Upload: React.FC<{
     }
   }, [list]);
 
+  //当文件列表发生变化时，更新fileHashSet
+  // useEffect(() => {
+  //   fileHashSet.current = new Set(files.map((file) => file.md5));
+  // }, [files]);
+
   /**
    * 过滤重复文件
    * @param files 文件列表
    * @param acceptedMD5s 已经计算的md5列表
    * @returns 不重复的文件列表
    */
-  async function filterDuplicateFiles(
-    fileList: File[],
-    acceptedMD5s: string[]
-  ) {
+  const filterDuplicateFiles = (fileList: File[], acceptedMD5s: string[]) => {
     const limit = pLimit(3);
-    const uniqueFiles: FileType[] = [];
-    //当前所有文件的md5集合
-    const fileHashSet = new Set(files.map((file) => file.md5));
-    await Promise.all(
-      fileList.map(async (file, index) => {
-        try {
-          const md5 =
-            acceptedMD5s[index] ?? (await limit(() => calculateMD5(file)));
-          if (!fileHashSet.has(md5)) {
-            fileHashSet.add(md5);
-            const src = URL.createObjectURL(file);
-            uniqueFiles.push({ file, md5, src });
-          }
-        } catch (error) {
-          console.error(error);
+    return fileList.map(async (file, index) => {
+      try {
+        const md5 =
+          acceptedMD5s[index] ?? (await limit(() => calculateMD5(file)));
+        if (!fileHashSet.current.has(md5)) {
+          fileHashSet.current.add(md5);
+          const src = URL.createObjectURL(file);
+          return { file, md5, src };
         }
-      })
-    );
-    return uniqueFiles;
-  }
+      } catch (error) {
+        console.error(error);
+      }
+      return null;
+    });
+  };
 
   const handleDrop = async (acceptedFiles: File[]) => {
     handleAdd(acceptedFiles);
@@ -65,21 +64,37 @@ const Upload: React.FC<{
     acceptedMD5s: string[] = [],
     insertIndex = files.length
   ) => {
-    const newFiles = await filterDuplicateFiles(acceptedFiles, acceptedMD5s);
-    //当外部没有传入的list时，该组件为非受控组件，直接更新状态
-    if (list === undefined) {
-      console.log("[[非受控组件]]: Add File");
-      setFiles(
-        produce((draftState) => {
-          draftState.splice(insertIndex, 0, ...newFiles);
-        })
-      );
+    //过滤重复文件
+    const newFiles = filterDuplicateFiles(acceptedFiles, acceptedMD5s);
+    //等待文件计算MD5完成
+    for (let i = 0; i < newFiles.length; i += 3) {
+      const result = await Promise.all(newFiles.slice(i, i + 3));
+      //过滤掉重复文件
+      const resultWithoutNull = result.filter((item) => item !== null);
+      if (resultWithoutNull.length > 0) {
+        //当外部没有传入的list时，该组件为非受控组件，直接更新状态
+        if (list === undefined) {
+          console.log("[[非受控组件]]: Add File");
+          setFiles(
+            produce((draftState) => {
+              draftState.splice(
+                insertIndex,
+                0,
+                ...(resultWithoutNull as FileType[])
+              );
+            })
+          );
+        } else {
+          //通知外部变更
+          onAdd?.(resultWithoutNull as FileType[], insertIndex);
+        }
+      }
     }
-    //通知外部变更
-    onAdd?.(newFiles, insertIndex);
   };
 
   const handleRemove = (md5: string) => {
+    //从fileHashSet中移除
+    fileHashSet.current.delete(md5);
     //当外部没有传入的list时，该组件为非受控组件，直接更新状态
     if (list === undefined) {
       const fileIndex = files.findIndex((file) => file.md5 === md5);
