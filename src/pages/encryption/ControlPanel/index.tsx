@@ -3,6 +3,7 @@ import ImageService from "@/service/image";
 import { Plugin } from "@/service/plugin/type";
 import List from "@/components/List";
 import { FileType } from "@/components/Upload/type";
+import Button from "@/components/Button";
 
 const Item = (props: { label: string; children?: React.ReactNode }) => {
   return (
@@ -201,21 +202,9 @@ export default function ControlPanel({
       </Item>
 
       <div className="text-center mt-3">
-        <button
-          type="button"
-          className={`whitespace-nowrap text-white bg-blue-700 hover:bg-blue-800 shadow font-medium rounded-lg text-sm px-5 py-2.5 mr-2  dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800`}
-          onClick={handleStart}
-          disabled={isEncrypting}
-        >
+        <Button onClick={handleStart} disabled={isEncrypting} className="w-1/3">
           开始
-        </button>
-        <button
-          type="button"
-          className="whitespace-nowrap text-white bg-blue-700 hover:bg-blue-800 shadow font-medium rounded-lg text-sm px-5 py-2.5 mr-2  dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
-          onClick={handleCancel}
-        >
-          清空
-        </button>
+        </Button>
       </div>
     </div>
   );
