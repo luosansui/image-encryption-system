@@ -1,31 +1,45 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Plugin } from "@/service/plugin/type";
-import { capitalizeFirstLetter } from "@/utils/string";
 interface SelectProps {
   options: Plugin[];
   onChange?: (pluginName: string) => void;
   className?: string;
+  renderList?: (option?: any) => JSX.Element;
+  renderFooter?: (option?: any) => JSX.Element;
 }
 
-const Select: React.FC<SelectProps> = ({ options, className, onChange }) => {
+const Select: React.FC<SelectProps> = ({
+  options,
+  className,
+  onChange,
+  renderList,
+  renderFooter,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState(0);
-
+  const selectRef = useRef<HTMLDivElement>(null);
+  /**
+   * 选项点击事件
+   * @param index 选中的option的index
+   */
   const handleOptionClick = (index: number) => {
     setSelectedOption(index);
     onChange?.(options[index]?.name ?? "");
     setIsOpen(false);
   };
 
-  const handleAddOption = () => {
-    // if (true) {
-    //   const newOptions = [...options];
-    //   setSelectedOption(newOptions.length);
-    //   onChange?.(newOptions[newOptions.length - 1]);
-    // }
+  //渲染list内容
+  const ListRender = (props: { option: any }) => {
+    if (renderList) {
+      return renderList(props.option);
+    }
+    return <span className="block truncate">{props.option.toString()}</span>;
   };
 
-  const selectRef = useRef<HTMLDivElement>(null);
+  //渲染list底部内容
+  const ListFooter = () => {
+    return renderFooter ? renderFooter() : null;
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -56,31 +70,17 @@ const Select: React.FC<SelectProps> = ({ options, className, onChange }) => {
           <ul className="pt-2">
             {options?.map((option, index) => (
               <li
-                key={`${index}${option.name}}`}
+                key={index}
                 className={`px-3 py-2 my-1 cursor-pointer select-none hover:bg-gray-100 ${
                   selectedOption === index ? "bg-gray-100 font-medium" : ""
                 }`}
                 onClick={() => handleOptionClick(index)}
               >
-                <div className="font-semibold">{option.name}</div>
-                <div className="text-xs truncate my-1">
-                  {option.description}
-                </div>
-                <div className="flex justify-between text-xs ">
-                  <span className="text-gray-500">
-                    {capitalizeFirstLetter(option.language)}
-                  </span>
-                  <span className="text-gray-400">{option.version}</span>
-                </div>
+                <ListRender option={option} />
               </li>
             ))}
           </ul>
-          <button
-            className="w-full py-2 border-t-2 border-gray-100 text-blue-500"
-            onClick={handleAddOption}
-          >
-            添加算法
-          </button>
+          <ListFooter />
         </div>
       )}
     </div>
