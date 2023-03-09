@@ -19,6 +19,8 @@ const Upload: React.FC<{
   const [isModalOpen, setIsModalOpen] = useState(false);
   //要编辑的图片
   const [editImageFile, setEditImageFile] = useState<FileType | null>(null);
+  //是否正在上传
+  const [isUploading, setIsUploading] = useState(false);
   //当外部传入的list时，该组件为受控组件
   useEffect(() => {
     if (list !== undefined) {
@@ -55,7 +57,7 @@ const Upload: React.FC<{
     });
   };
 
-  const handleDrop = async (acceptedFiles: File[]) => {
+  const handleDrop = (acceptedFiles: File[]) => {
     handleAdd(acceptedFiles);
   };
 
@@ -64,6 +66,7 @@ const Upload: React.FC<{
     acceptedMD5s: string[] = [],
     insertIndex = files.length
   ) => {
+    setIsUploading(true);
     //过滤重复文件
     const newFiles = filterDuplicateFiles(acceptedFiles, acceptedMD5s);
     //等待文件计算MD5完成
@@ -78,7 +81,7 @@ const Upload: React.FC<{
           setFiles(
             produce((draftState) => {
               draftState.splice(
-                insertIndex,
+                insertIndex + i,
                 0,
                 ...(resultWithoutNull as FileType[])
               );
@@ -86,10 +89,11 @@ const Upload: React.FC<{
           );
         } else {
           //通知外部变更
-          onAdd?.(resultWithoutNull as FileType[], insertIndex);
+          onAdd?.(resultWithoutNull as FileType[], insertIndex + i);
         }
       }
     }
+    setIsUploading(false);
   };
 
   const handleRemove = (md5: string) => {
@@ -142,7 +146,7 @@ const Upload: React.FC<{
   return (
     <Fragment>
       <div className={`flex flex-wrap ${className ?? ""}`}>
-        <Dropzone onDrop={handleDrop}>
+        <Dropzone onDrop={handleDrop} disabled={isUploading}>
           {({ getRootProps, getInputProps }) => (
             <div className="sticky top-0 p-2 box-border w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-[12.5%]">
               <div
