@@ -67,7 +67,7 @@ const Sidebar: React.FC = () => {
   return (
     <Fragment>
       <button
-        className="sm:hidden w-fit p-2 mt-2 ml-3 text-gray-500 rounded-lg hover:bg-gray-100 focus:outline-none dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+        className="md:hidden w-fit p-2 mt-2 ml-3 text-gray-500 rounded-lg hover:bg-gray-100 focus:outline-none dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
         type="button"
         data-drawer-target="drawer-navigation"
         data-drawer-show="drawer-navigation"
@@ -90,10 +90,10 @@ const Sidebar: React.FC = () => {
 
       <div
         id="drawer-navigation"
-        className="max-w-full select-none fixed top-0 left-0 z-40 w-64 h-screen p-4 overflow-y-auto transition-transform -translate-x-full sm:translate-x-0 bg-gray-100 dark:bg-gray-800"
+        className="max-w-full select-none fixed top-0 left-0 z-40 w-64 h-screen p-4 overflow-y-auto transition-transform -translate-x-full md:translate-x-0 bg-gray-100 dark:bg-gray-800"
         aria-labelledby="drawer-navigation-label"
       >
-        <div className="flex justify-between items-center sm:hidden">
+        <div className="flex justify-between items-center md:hidden">
           <div className="font-semibold text-gray-600 text-lg">
             图像加密系统
           </div>
@@ -119,7 +119,7 @@ const Sidebar: React.FC = () => {
             <span className="sr-only">Close menu</span>
           </button>
         </div>
-        <div className="pt-2 sm:pt-0 bg-gray-100">
+        <div className="pt-2 md:pt-0 bg-gray-100">
           <ul className="">
             {routes?.map(
               (route, index) =>
