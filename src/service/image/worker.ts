@@ -9,7 +9,12 @@ import { deserializeFunction } from "@/utils/function";
 //缓存函数;
 let cachedFunction: ((...args: any[]) => any) | null = null;
 
-const handle = async (origin: FileType, secretKey: string, MIME: string) => {
+const handle = async (
+  origin: FileType,
+  secretKey: string,
+  MIME: string,
+  quality: number
+) => {
   //获取文件buffer
   const { buffer, width, height, name } = await file2PixelsBuffer(origin.file);
   //使用缓存函数处理
@@ -22,7 +27,8 @@ const handle = async (origin: FileType, secretKey: string, MIME: string) => {
       height,
       name,
     },
-    MIME
+    MIME,
+    quality
   );
   //计算md5
   const md5 = await calculateMD5(file);
@@ -40,7 +46,7 @@ self.addEventListener(
   "message",
   async (
     event: MessageEvent<{
-      args?: [FileType, string, string];
+      args?: [FileType, string, string, number];
       func?: ArrayBuffer;
     }>
   ) => {

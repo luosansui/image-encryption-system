@@ -10,4 +10,25 @@ export const OPTION_CARDS = [
   },
 ];
 //图像格式
-export const IMAGE_FORMATS = ["源格式", "PNG", "JPEG", "BMP"];
+export const IMAGE_FORMATS = [
+  {
+    label: "源格式",
+    value: "",
+  },
+  {
+    label: "PNG",
+    value: "image/png",
+  },
+  {
+    label: "JPEG",
+    value: "image/jpeg",
+  },
+  {
+    label: "BMP",
+    value: "image/bmp",
+  },
+  {
+    label: "WEBP",
+    value: "image/webp",
+  },
+];

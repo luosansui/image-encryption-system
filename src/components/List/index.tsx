@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 interface SelectProps {
   options: any[];
-  onChange?: (pluginName: string) => void;
+  onChange?: (value: any) => void;
   className?: string;
   renderSelected?: (option?: any) => JSX.Element | string;
   renderList?: (option?: any) => JSX.Element;
@@ -28,7 +28,7 @@ const Select: React.FC<SelectProps> = ({
    */
   const handleOptionClick = (index: number) => {
     setSelectedOption(index);
-    onChange?.(options[index]?.name ?? "");
+    onChange?.(options[index]);
     setIsOpen(false);
   };
   //渲染选中的内容

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { produce } from "immer";
 import ControlPanel from "@/pages/encryption/ControlPanel";
 import Upload from "@/components/Upload";

@@ -61,27 +61,6 @@ class ImageService {
     return this.pluginService.getPlugins();
   }
   /**
-   * 图像解密，不处理任何错误，直接抛出
-   * @param pluginName 算法名称
-   * @param files 图像列表
-   * @param secretKey 密钥
-   * @returns
-   */
-  public encrypt(...args: processImageFuncArgsType) {
-    return this.processing(...args, "encrypt");
-  }
-  /**
-   * 图像解密，不处理任何错误，直接抛出
-   * @param pluginName 算法名称
-   * @param files 图像列表
-   * @param secretKey 密钥
-   * @returns
-   */
-  public decrypt(...args: processImageFuncArgsType) {
-    return this.processing(...args, "decrypt");
-  }
-
-  /**
    * 获取算法实例，不处理任何错误，直接抛出
    * @param pluginName 插件名称
    * @returns 插件实例
@@ -106,6 +85,27 @@ class ImageService {
     return { encrypt, decrypt };
   }
   /**
+   * 图像解密，不处理任何错误，直接抛出
+   * @param pluginName 算法名称
+   * @param files 图像列表
+   * @param secretKey 密钥
+   * @returns
+   */
+  public encrypt(...args: processImageFuncArgsType) {
+    return this.processing("encrypt", ...args);
+  }
+  /**
+   * 图像解密，不处理任何错误，直接抛出
+   * @param pluginName 算法名称
+   * @param files 图像列表
+   * @param secretKey 密钥
+   * @returns
+   */
+  public decrypt(...args: processImageFuncArgsType) {
+    return this.processing("decrypt", ...args);
+  }
+
+  /**
    * 图像处理，不处理任何错误，直接抛出
    * @param pluginName 算法名称
    * @param files 图像列表
@@ -113,10 +113,11 @@ class ImageService {
    * @returns
    */
   private processing(
-    pluginName: string,
-    files: FileType[],
-    secretKey: string,
-    type: "encrypt" | "decrypt"
+    type: "encrypt" | "decrypt",
+    pluginName: processImageFuncArgsType[0],
+    files: processImageFuncArgsType[1],
+    secretKey: processImageFuncArgsType[2],
+    options: processImageFuncArgsType[3]
   ) {
     //获取算法实例
     const exeFunc = this.getInstance(pluginName)[type];
@@ -138,10 +139,14 @@ class ImageService {
     //执行操作
     const result = unProcessedFiles.map(
       async (origin): Promise<[FileType, FileType]> => {
+        //获取文件类型
+        const MIME = options.format || origin.file.type;
+        //执行操作
         const fileWithOutSrc = await this.workService!.run<FileType>(
           origin,
           secretKey,
-          "image/png"
+          MIME,
+          options.quality
         );
         const newFile = {
           ...fileWithOutSrc,
