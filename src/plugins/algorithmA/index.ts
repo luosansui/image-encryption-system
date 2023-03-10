@@ -1,5 +1,4 @@
 type encryptFuncType = (data: ArrayBuffer, key: string) => ArrayBuffer;
-type decryptFuncType = encryptFuncType;
 
 const encrypt: encryptFuncType = (pixelData, secretKey) => {
   const str2Num = (str: string): number => {
@@ -29,8 +28,6 @@ const encrypt: encryptFuncType = (pixelData, secretKey) => {
   pixelBuffer.set(tempBuffer);
   return pixelBuffer.buffer;
 };
-const decrypt: decryptFuncType = (data, key) => {
-  return encrypt(data, key); // 加密解密操作完全相同
-};
+const decrypt = encrypt;
 
 export { encrypt, decrypt };
