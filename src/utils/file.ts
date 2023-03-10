@@ -91,7 +91,8 @@ export async function file2PixelsBuffer(file: File): Promise<PixelBuffer> {
  */
 export async function pixelsBuffer2File(
   pixelBuffer: PixelBuffer,
-  type: string
+  type: string,
+  quality = 1
 ): Promise<File> {
   const { buffer, width, height, name } = pixelBuffer;
   const imageData = new ImageData(new Uint8ClampedArray(buffer), width, height);
@@ -102,7 +103,7 @@ export async function pixelsBuffer2File(
   ctx.putImageData(imageData, 0, 0);
   const blob = await (offscreenCanvas as any).convertToBlob({
     type,
-    quality: 1,
+    quality,
   });
   return new File([blob], name, { type: blob.type });
 }

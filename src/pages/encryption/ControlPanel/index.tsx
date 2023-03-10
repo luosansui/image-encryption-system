@@ -6,6 +6,7 @@ import { FileType } from "@/components/Upload/type";
 import Button from "@/components/Button";
 import { IMAGE_FORMATS, OPTION_CARDS } from "./constant";
 import { capitalizeFirstLetter } from "@/utils/string";
+import { ImageFormats } from "./type";
 
 const Item = (props: { label: string; children?: React.ReactNode }) => {
   return (
@@ -30,22 +31,26 @@ export default function ControlPanel({
   handleGenerateResult?: (files: [FileType, FileType]) => void;
   className?: string;
 }) {
-  //图片质量
-  const [quality, setQuality] = useState(50);
-  //是否正在加密中
-  const [isEncrypting, setIsEncrypting] = useState(false);
+  //插件列表
+  const [pluginList, setPluginList] = useState<Plugin[]>([]);
+
   //插件名称
   const [pluginName, setPluginName] = useState<string>("未载入插件");
-  //密钥
-  const [key, setKey] = useState<string>("");
   //选项卡名称
   const [optionName, setOptionName] = useState<"encrypt" | "decrypt">(
     "encrypt"
   );
+  //密钥
+  const [key, setKey] = useState<string>("");
   //是否开启密钥隐写
   const [isEmbedKey, setIsEmbedKey] = useState(false);
-  //插件列表
-  const [pluginList, setPluginList] = useState<Plugin[]>([]);
+  //图像格式
+  const [imageFormat, setImageFormat] = useState<ImageFormats>("");
+  //图片质量
+  const [quality, setQuality] = useState(100);
+
+  //是否正在加密中
+  const [isEncrypting, setIsEncrypting] = useState(false);
   //图片服务
   const imageService = useRef<ImageService | null>(null);
 
@@ -56,9 +61,14 @@ export default function ControlPanel({
     if (!fileList.length || !imageService.current) {
       return;
     }
+    //pluginName，key，isEmbedKey，
     setIsEncrypting(true);
+    const execFunc = imageService.current[optionName];
     //获取加密结果
-    const resList = imageService.current[optionName](pluginName, fileList, "");
+    const resList = execFunc(pluginName, fileList, "", {
+      format: imageFormat,
+      quality,
+    });
     //没有新结果
     if (!resList.length) {
       setIsEncrypting(false);
@@ -98,8 +108,8 @@ export default function ControlPanel({
    * 选择算法插件改变
    * @param pluginName 插件名称
    */
-  const handlePluginChange = (pluginName: string) => {
-    setPluginName(pluginName);
+  const handlePluginChange = (plugin: Plugin) => {
+    setPluginName(plugin?.name ?? "");
   };
 
   /**
@@ -121,6 +131,12 @@ export default function ControlPanel({
     if (!isNaN(value) && value >= 0 && value <= 100) {
       setQuality(value);
     }
+  };
+  /**
+   * 图像格式改变
+   */
+  const handleImageFormatChange = ({ value }: { value: ImageFormats }) => {
+    setImageFormat(value);
   };
 
   /**
@@ -177,10 +193,18 @@ export default function ControlPanel({
       </button>
     );
   };
-  //输入key是否禁用
+  //key输入框是否禁用
   const isKeyDisabled = useMemo(() => {
     return optionName === "decrypt" && isEmbedKey;
   }, [isEmbedKey, optionName]);
+  //图像质量输入框是否禁用
+  const isQualityDisabled = useMemo(() => {
+    return (
+      imageFormat !== "image/jpeg" &&
+      imageFormat !== "image/webp" &&
+      imageFormat !== ""
+    );
+  }, [imageFormat]);
   //载入图片业务
   useEffect(() => {
     initImageService();
@@ -269,7 +293,9 @@ export default function ControlPanel({
       <Item label="文件格式">
         <List
           options={IMAGE_FORMATS}
-          //onChange={handlePluginChange}
+          onChange={handleImageFormatChange}
+          renderSelected={(item) => item.label}
+          renderList={(list) => list.label}
           className="flex-1"
         ></List>
       </Item>
@@ -280,6 +306,7 @@ export default function ControlPanel({
           min="0"
           max="100"
           value={quality}
+          disabled={isQualityDisabled}
           onChange={handleQualityChange}
           className="w-72"
         />

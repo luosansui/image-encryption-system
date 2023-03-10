@@ -1,4 +1,5 @@
 import { FileType } from "@/components/Upload/type";
+import { ImageFormats } from "@/pages/encryption/ControlPanel/type";
 import { Plugin } from "@/service/plugin/type";
 
 export type encryptFuncType = (
@@ -18,4 +19,12 @@ export type PluginJson = Omit<Plugin, "path"> & {
   default: Omit<Plugin, "path">;
 };
 
-export type processImageFuncArgsType = [string, FileType[], string];
+export type processImageFuncArgsType = [
+  string,
+  FileType[],
+  string,
+  {
+    format: ImageFormats;
+    quality: number;
+  }
+];
