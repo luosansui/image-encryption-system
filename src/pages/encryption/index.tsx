@@ -95,26 +95,3 @@ export default function Encryption() {
     </div>
   );
 }
-
-/**
- * <div className="min-w-[300px] flex-1 flex flex-col">
-        <div className="flex-1 p-2 mb-3 border-2 border-gray-200 rounded-lg">
-          
-        </div>
-        <div className="flex-1 flex flex-col">
-
-          
-
-          
-        </div>
-      </div>
-      <div className="w-[400px] ml-3 flex flex-col">
-        <div className="flex-1 mb-3 p-4 border-2 border-gray-200 rounded-lg">
-     
-          
-        </div>
-        <div className="flex-1 p-2 border-2 border-gray-200 rounded-lg ">
-          
-        </div>
-      </div>
- */
