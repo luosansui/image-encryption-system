@@ -129,3 +129,11 @@ export const file2Image = (file: File): Promise<HTMLImageElement> => {
     reader.readAsDataURL(file);
   });
 };
+/**
+ * @param origin File格式图像文件
+ * @param current File格式图像文件
+ * @returns 压缩率
+ */
+export const getCompressionRate = (origin: File, current: File) => {
+  return `${Math.round((current.size / origin.size) * 10000) / 100} %`;
+};

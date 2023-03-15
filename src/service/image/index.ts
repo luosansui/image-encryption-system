@@ -101,10 +101,11 @@ class ImageService {
       throw new Error("缓存服务未初始化");
     }
     //从缓存服务中过滤未解密过的文件
-    const unProcessedFiles = this.originFileCache.filterNoHas(files);
+    /*  const unProcessedFiles = this.originFileCache.filterNoHas(files);
     if (unProcessedFiles.length === 0) {
       return [];
-    }
+    } */
+    const unProcessedFiles = files;
     //实例化多线程服务
     if (!this.workService) {
       //获取较优线程数
@@ -115,7 +116,7 @@ class ImageService {
     const result = unProcessedFiles.map(
       async (origin): Promise<[FileType, FileType]> => {
         //原图计入缓存
-        this.originFileCache.add(origin);
+        //this.originFileCache.add(origin);
         //获取文件类型
         const MIME = format || origin.file.type;
         //执行操作

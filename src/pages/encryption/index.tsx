@@ -13,7 +13,7 @@ import { Plugin } from "@/service/plugin/type";
 export default function Encryption() {
   //文件列表
   const [fileList, setFileList] = useState<FileType[]>([]);
-  //生成列表
+  //生成列表(两个顺序一致)
   const [filePair, setFilePair] = useState<[FileType, FileType][]>([]);
   //插件列表
   const [pluginList, setPluginList] = useState<Plugin[]>([]);
@@ -46,6 +46,16 @@ export default function Encryption() {
         draft.splice(fileIndex, 1);
       })
     );
+    //删除生成列表中的文件
+    const pair = filePair[fileIndex];
+    if (pair) {
+      revoke(pair[1].src);
+      setFilePair(
+        produce((draft) => {
+          draft.splice(fileIndex, 1);
+        })
+      );
+    }
   };
   /**
    * 初始化图片服务
@@ -63,13 +73,18 @@ export default function Encryption() {
       console.error(error);
     }
   };
-  //载入图片业务
+  /**
+   * 载入图片业务
+   */
   useEffect(() => {
     initImageService();
     return () => {
       imageService.current = null;
     };
   }, []);
+  /**
+   * 保持上传文件和生成文件一致
+   */
   /**
    * 处理生成结果
    */
@@ -89,6 +104,7 @@ export default function Encryption() {
     }
     //开始加密
     setIsEncrypting(true);
+    setFilePair([]);
     try {
       //获取结果
       const resList = imageService.current.processing(fileList, options);
@@ -126,9 +142,6 @@ export default function Encryption() {
    * 进度条是否显示
    */
   const isProgressShow = useMemo(() => progress > 0, [progress]);
-  /**
-   * 是否禁用面板
-   */
   return (
     <div className="h-full grid grid-rows-2 grid-cols-[minmax(300px,auto)_minmax(300px,400px)] gap-3">
       <div className="border-2 border-gray-200 rounded-lg p-2">
@@ -153,7 +166,7 @@ export default function Encryption() {
       </div>
       <div className="flex flex-col col-span-2">
         <div className="flex-1 border-2 rounded-lg overflow-hidden">
-          <OutPut pairList={filePair} />
+          <OutPut pairList={filePair} onRemove={handleFileListRemove} />
         </div>
         <div
           className={`p-2 mt-3 border-2 border-gray-200 shadow-sm rounded-lg ${
