@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import Modal from "react-modal";
+import CustomModal from "@/components/CustomModal";
 import ImageCrop, {
   centerCrop,
   Crop,
@@ -7,12 +7,11 @@ import ImageCrop, {
   PixelCrop,
 } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
-import "./index.css";
+
 import Ruler from "../Ruler";
 import { FileType } from "../Upload/type";
 import { canvasPreview } from "./canvasPreview";
 import { DEFAULT_ROTATE, DEFAULT_SCALE } from "./constant";
-Modal.setAppElement("#root");
 
 interface ModalContentProps {
   imageFile: FileType | null;
@@ -348,34 +347,17 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
   onClose,
   onChange,
 }) => {
-  const [isDestroy, setIsDestroy] = useState(false);
-  //模态框打开后创建元素
-  const handleAfterOpen = () => {
-    setIsDestroy(false);
-  };
-  //模态框关闭后销毁内部元素
-  const handleAfterClose = () => {
-    setIsDestroy(true);
-  };
-
   return (
-    <Modal
+    <CustomModal
       isOpen={isOpen}
-      closeTimeoutMS={250}
-      onAfterClose={handleAfterClose}
-      onAfterOpen={handleAfterOpen}
-      contentLabel="Image Crop Modal"
-      overlayClassName="fixed inset-0 bg-black bg-opacity-75 z-50 select-none"
-      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-md shadow-md h-[75%] w-3/4 lg:w-2/3 2xl:w-2/5 outline-none"
+      className="bg-white h-[75%] w-3/4 lg:w-2/3 2xl:w-2/5 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 "
     >
-      {isDestroy ? null : (
-        <ModalContent
-          imageFile={imageFile}
-          onClose={onClose}
-          onChange={onChange}
-        />
-      )}
-    </Modal>
+      <ModalContent
+        imageFile={imageFile}
+        onClose={onClose}
+        onChange={onChange}
+      />
+    </CustomModal>
   );
 };
 

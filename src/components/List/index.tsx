@@ -6,6 +6,7 @@ interface SelectProps {
   renderSelected?: (option?: any) => JSX.Element | string;
   renderList?: (option?: any) => JSX.Element;
   renderFooter?: (option?: any) => JSX.Element;
+  disabled?: boolean;
 }
 
 const Select: React.FC<SelectProps> = ({
@@ -15,6 +16,7 @@ const Select: React.FC<SelectProps> = ({
   renderSelected,
   renderList,
   renderFooter,
+  disabled,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState(0);
@@ -78,6 +80,7 @@ const Select: React.FC<SelectProps> = ({
         type="button"
         className="bg-gray-50 border border-gray-300 text-gray-600 text-sm font-semibold rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full px-2 py-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
         onClick={() => setIsOpen(!isOpen)}
+        disabled={disabled}
       >
         <span className="block truncate">
           <SelectedRender option={options[selectedOption]} />

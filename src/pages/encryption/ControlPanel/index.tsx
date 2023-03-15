@@ -1,12 +1,11 @@
-import React, { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import ImageService from "@/service/image";
+import React, { Fragment, useEffect, useState } from "react";
 import { Plugin } from "@/service/plugin/type";
 import List from "@/components/List";
-import { FileType } from "@/components/Upload/type";
 import Button from "@/components/Button";
 import { IMAGE_FORMATS, OPTION_CARDS } from "./constant";
 import { capitalizeFirstLetter } from "@/utils/string";
-import { ImageFormats } from "./type";
+import { ControlOptionType, ImageFormatType } from "./type";
+import CardSelect from "@/components/CardSelect";
 
 const Item = (props: { label: string; children?: React.ReactNode }) => {
   return (
@@ -23,19 +22,18 @@ const Item = (props: { label: string; children?: React.ReactNode }) => {
 };
 
 export default function ControlPanel({
-  fileList, //文件列表
-  handleGenerateResult, //处理生成结果
-  className,
+  onStart, //开始加密
+  className, //类名
+  pluginList, //插件列表
+  disabled, //是否正在加密
 }: {
-  fileList: FileType[];
-  handleGenerateResult?: (files: [FileType, FileType]) => void;
+  onStart?: (option: ControlOptionType) => void;
   className?: string;
+  pluginList: Plugin[];
+  disabled?: boolean;
 }) {
-  //插件列表
-  const [pluginList, setPluginList] = useState<Plugin[]>([]);
-
   //插件名称
-  const [pluginName, setPluginName] = useState<string>("未载入插件");
+  const [pluginName, setPluginName] = useState<string>("");
   //选项卡名称
   const [optionName, setOptionName] = useState<"encrypt" | "decrypt">(
     "encrypt"
@@ -45,63 +43,25 @@ export default function ControlPanel({
   //是否开启密钥隐写
   const [isEmbedKey, setIsEmbedKey] = useState(false);
   //图像格式
-  const [imageFormat, setImageFormat] = useState<ImageFormats>("");
+  const [format, setFormat] = useState<ImageFormatType>("");
   //图片质量
   const [quality, setQuality] = useState(100);
-
-  //是否正在加密中
-  const [isEncrypting, setIsEncrypting] = useState(false);
-  //图片服务
-  const imageService = useRef<ImageService | null>(null);
-
+  //是否禁用密钥输入
+  const [isKeyDisabled, setIsKeyDisabled] = useState(false);
+  //是否禁用图像质量
+  const [isQualityDisabled, setIsQualityDisabled] = useState(false);
   /**
    * 开始加密
    */
   const handleStart = () => {
-    if (!fileList.length || !imageService.current) {
-      return;
-    }
-    //pluginName，key，isEmbedKey，
-    setIsEncrypting(true);
-    const execFunc = imageService.current[optionName];
-    //获取加密结果
-    const resList = execFunc(pluginName, fileList, "", {
-      format: imageFormat,
+    onStart?.({
+      pluginName,
+      optionName,
+      key,
+      isEmbedKey,
+      format,
       quality,
     });
-    //没有新结果
-    if (!resList.length) {
-      setIsEncrypting(false);
-      return;
-    }
-    //已处理个数
-    let doneCount = 0;
-    //处理加密结果
-    resList.forEach(async (promisePair) => {
-      const pair = await promisePair;
-      if (++doneCount === fileList.length) {
-        setIsEncrypting(false);
-      }
-      handleGenerateResult?.(pair);
-    });
-  };
-
-  /**
-   * 初始化图片服务
-   */
-  const initImageService = async () => {
-    try {
-      imageService.current = new ImageService();
-      await imageService.current.initService();
-      const plugins = imageService.current.getPlugins();
-      console.log("plugins", plugins);
-      if (plugins.length) {
-        setPluginList(plugins);
-        setPluginName(plugins[0]?.name ?? "未命名插件");
-      }
-    } catch (error) {
-      console.error(error);
-    }
   };
 
   /**
@@ -116,8 +76,7 @@ export default function ControlPanel({
    * 要执行的操作改变
    * @param event 事件对象
    */
-  const handleOptionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Number(event.target.value);
+  const handleOptionChange = (value: number) => {
     const options: ["encrypt", "decrypt"] = ["encrypt", "decrypt"];
     setOptionName(options[value]);
   };
@@ -135,8 +94,8 @@ export default function ControlPanel({
   /**
    * 图像格式改变
    */
-  const handleImageFormatChange = ({ value }: { value: ImageFormats }) => {
-    setImageFormat(value);
+  const handleImageFormatChange = ({ value }: { value: ImageFormatType }) => {
+    setFormat(value);
   };
 
   /**
@@ -159,7 +118,7 @@ export default function ControlPanel({
    * 渲染插件已选择的内容
    */
   const renderPluginSelected = (option: Plugin) => {
-    return option.name;
+    return option.name ?? "未载入算法";
   };
 
   /**
@@ -194,30 +153,29 @@ export default function ControlPanel({
     );
   };
   //key输入框是否禁用
-  const isKeyDisabled = useMemo(() => {
-    return optionName === "decrypt" && isEmbedKey;
-  }, [isEmbedKey, optionName]);
-  //图像质量输入框是否禁用
-  const isQualityDisabled = useMemo(() => {
-    return (
-      imageFormat !== "image/jpeg" &&
-      imageFormat !== "image/webp" &&
-      imageFormat !== ""
-    );
-  }, [imageFormat]);
-  //载入图片业务
   useEffect(() => {
-    initImageService();
-    return () => {
-      imageService.current = null;
-    };
-  }, []);
+    setIsKeyDisabled(optionName === "decrypt" && isEmbedKey);
+  }, [isEmbedKey, optionName]);
 
+  //图像质量输入框是否禁用
+  useEffect(() => {
+    const disabledResult =
+      format !== "image/jpeg" && format !== "image/webp" && format !== "";
+    if (disabledResult) {
+      setQuality(100);
+    }
+    setIsQualityDisabled(disabledResult);
+  }, [format]);
+  //pluginList改变时，重置插件名称
+  useEffect(() => {
+    setPluginName(pluginList[0]?.name ?? "");
+  }, [pluginList]);
   return (
     <div className={`text-gray-600 p-2 ${className ?? ""}`}>
       {/* 算法列表 */}
       <List
         options={pluginList}
+        disabled={disabled}
         onChange={handlePluginChange}
         renderSelected={renderPluginSelected}
         renderList={renderPluginList}
@@ -226,51 +184,18 @@ export default function ControlPanel({
       ></List>
 
       {/* 选择操作 */}
-      <ul className="grid w-full gap-4 md:grid-cols-2 mb-5">
-        {OPTION_CARDS.map((item, index) => (
-          <li key={index}>
-            <input
-              type="radio"
-              id={`${index}`}
-              name="hosting"
-              value={`${index}`}
-              className="hidden peer"
-              required
-              defaultChecked={index === 0}
-              onChange={handleOptionChange}
-            />
-            <label
-              htmlFor={`${index}`}
-              className="inline-flex items-center justify-between w-full p-4 text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-gray-300 dark:border-gray-700 dark:peer-checked:text-blue-500 peer-checked:border-blue-600 peer-checked:text-blue-600 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700"
-            >
-              <div className="block">
-                <div className="w-full text-lg font-semibold">{item.title}</div>
-                <div className="w-full">{item.description}</div>
-              </div>
-              <svg
-                aria-hidden="true"
-                className="w-10 h-10 ml-3"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z"
-                  clipRule="evenodd"
-                ></path>
-              </svg>
-            </label>
-          </li>
-        ))}
-      </ul>
+      <CardSelect
+        options={OPTION_CARDS}
+        disabled={disabled}
+        onChange={handleOptionChange}
+      />
 
       {/* 秘钥 */}
       <Item label="秘钥">
         <input
           type="text"
           value={key}
-          disabled={isKeyDisabled}
+          disabled={disabled || isKeyDisabled}
           onChange={handleKeyChange}
           className={`${
             isKeyDisabled ? "!bg-gray-200" : ""
@@ -283,6 +208,7 @@ export default function ControlPanel({
           <input
             type="checkbox"
             checked={isEmbedKey}
+            disabled={disabled}
             onChange={handleEmbedKeyChange}
             className="sr-only peer"
           />
@@ -293,6 +219,7 @@ export default function ControlPanel({
       <Item label="文件格式">
         <List
           options={IMAGE_FORMATS}
+          disabled={disabled}
           onChange={handleImageFormatChange}
           renderSelected={(item) => item.label}
           renderList={(list) => list.label}
@@ -306,7 +233,7 @@ export default function ControlPanel({
           min="0"
           max="100"
           value={quality}
-          disabled={isQualityDisabled}
+          disabled={disabled || isQualityDisabled}
           onChange={handleQualityChange}
           className="w-72"
         />
@@ -314,7 +241,7 @@ export default function ControlPanel({
       </Item>
 
       <div className="text-center mt-3">
-        <Button onClick={handleStart} disabled={isEncrypting} className="w-1/4">
+        <Button onClick={handleStart} disabled={disabled} className="w-1/4">
           开始
         </Button>
       </div>
