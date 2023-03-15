@@ -4,7 +4,7 @@ import Dropzone from "react-dropzone";
 import pLimit from "p-limit";
 import { produce } from "immer";
 import { FileType } from "@/components/Upload/type";
-import ImageCropModal from "../ImageCrop";
+import ImageCrop from "../ImageCrop";
 
 const Upload: React.FC<{
   list?: FileType[];
@@ -203,7 +203,7 @@ const Upload: React.FC<{
           </div>
         ))}
       </div>
-      <ImageCropModal
+      <ImageCrop
         imageFile={editImageFile}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
