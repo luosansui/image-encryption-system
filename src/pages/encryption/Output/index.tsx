@@ -3,6 +3,7 @@ import Table from "@/components/Table";
 import { FileType } from "@/components/Upload/type";
 import { columns } from "./constant";
 import CustomModal from "@/components/CustomModal";
+import { getCompressionRate } from "@/utils/file";
 /**
  *
  * @param { src: string } 图片src
@@ -30,9 +31,11 @@ const ImageWrapper = ({
 
 export default function Output({
   pairList,
+  className,
 }: {
   pairList: [FileType, FileType][];
   className?: string;
+  onRemove?: (revoke: (url: string) => void, md5: string) => void; //第一个参数revoke是为了显式的告诉外部需要释放url资源
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editImage, setEditImage] = useState<string | null>(null);
@@ -56,7 +59,7 @@ export default function Output({
    */
   const generateData = () =>
     Array.from(pairList, ([originFile, encryptFile]) => ({
-      id: originFile.md5 + encryptFile.md5,
+      id: originFile.md5,
       origin: (
         <ImageWrapper
           src={originFile.src}
@@ -69,8 +72,12 @@ export default function Output({
           onClick={() => handleOpenModal(encryptFile.src)}
         />
       ),
-      currentResolution: 123,
-      operate: 123,
+      compressionRatio: getCompressionRate(originFile.file, encryptFile.file),
+      operate: (
+        <span className="cursor-pointer text-red-400 font-semibold text-sm underline underline-offset-2">
+          删除
+        </span>
+      ),
     }));
 
   return (
