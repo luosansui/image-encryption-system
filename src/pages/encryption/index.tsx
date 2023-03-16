@@ -128,6 +128,7 @@ export default function Encryption() {
     setFilePair([]);
     try {
       //获取结果
+      console.log("options", options);
       const resList = imageService.current.processing(fileList, options);
       //处理加密结果
       for await (const item of resList) {
