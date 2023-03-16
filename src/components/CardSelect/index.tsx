@@ -9,9 +9,11 @@ export default function CardSelect({
   options,
   disabled,
   onChange,
+  className,
 }: {
   options: CardSelectOptionType[];
   disabled?: boolean;
+  className?: string;
   onChange?: (value: number) => void;
 }) {
   //选择回调
@@ -21,7 +23,7 @@ export default function CardSelect({
   };
   const disabledClass = disabled ? "opacity-80 pointer-events-none" : "";
   return (
-    <ul className="grid w-full gap-4 md:grid-cols-2 mb-5">
+    <ul className={`grid w-full gap-4 md:grid-cols-2 mb-5 ${className}`}>
       {options.map((item, index) => (
         <li key={index}>
           <input

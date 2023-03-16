@@ -126,10 +126,6 @@ export default function Encryption() {
     //开始加密
     setIsEncrypting(true);
     setFilePair([]);
-    //如果有全是新上传的文件，清空生成列表
-    // if (progress === 1) {
-    //   setFilePair([]);
-    // }
     try {
       //获取结果
       const resList = imageService.current.processing(fileList, options);
