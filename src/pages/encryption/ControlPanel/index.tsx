@@ -55,7 +55,7 @@ export default function ControlPanel({
       optionName,
       key,
       format,
-      quality,
+      quality: quality / 100,
     });
   };
 
