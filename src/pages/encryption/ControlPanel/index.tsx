@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useState } from "react";
+import React, { Fragment, useEffect, useMemo, useState } from "react";
 import { Plugin } from "@/service/plugin/type";
 import List from "@/components/List";
 import Button from "@/components/Button";
@@ -170,6 +170,17 @@ export default function ControlPanel({
   useEffect(() => {
     setPluginName(pluginList[0]?.name ?? "");
   }, [pluginList]);
+  //图像质量描述
+  const qualityLabel = useMemo(() => {
+    if (quality === 100) {
+      return "无损";
+    } else if (quality === 0) {
+      return "最低";
+    } else {
+      return `${quality}%`;
+    }
+  }, [quality]);
+
   return (
     <div className={`text-gray-600 p-2 ${className ?? ""}`}>
       {/* 算法列表 */}
@@ -237,7 +248,9 @@ export default function ControlPanel({
           onChange={handleQualityChange}
           className="w-72"
         />
-        <span className="text-sm ml-1 w-7 text-center">{quality}</span>
+        <span className="whitespace-nowrap text-sm ml-1 w-7 text-center">
+          {qualityLabel}
+        </span>
       </Item>
 
       <div className="text-center mt-3">

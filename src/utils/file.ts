@@ -1,8 +1,6 @@
 import { PixelBuffer } from "@/service/image/type";
 import SparkMD5 from "spark-md5";
 
-export type ProgressCallback = (progress: number) => void;
-
 /**
  * 计算文件的 MD5 值
  * @param file 文件对象
@@ -11,7 +9,7 @@ export type ProgressCallback = (progress: number) => void;
  */
 export function calculateMD5(
   file: File,
-  onProgress?: ProgressCallback
+  onProgress?: (progress: number) => void
 ): Promise<string> {
   const fileSize = file.size;
   const chunkSize = 1024 * 1024 * 10; // 每片 10MB

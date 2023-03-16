@@ -16,20 +16,11 @@ const handle = async (
   quality: number
 ) => {
   //获取文件buffer
-  const { buffer, width, height, name } = await file2PixelsBuffer(origin.file);
+  const pixelBuffer = await file2PixelsBuffer(origin.file);
   //使用缓存函数处理
-  const resultBuffer = cachedFunction!(buffer, secretKey);
+  const resultBuffer = await cachedFunction!(pixelBuffer, secretKey);
   //转换为文件
-  const file = await pixelsBuffer2File(
-    {
-      buffer: resultBuffer,
-      width,
-      height,
-      name,
-    },
-    MIME,
-    quality
-  );
+  const file = await pixelsBuffer2File(resultBuffer, MIME, quality);
   //计算md5
   const md5 = await calculateMD5(file);
   /**
