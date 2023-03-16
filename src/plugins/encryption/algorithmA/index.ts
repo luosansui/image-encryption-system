@@ -1,9 +1,9 @@
-type encryptFuncType = (data: ArrayBuffer, key: string) => ArrayBuffer;
+import { PixelBuffer } from "@/service/image/type";
 
-const encrypt: encryptFuncType = (pixelData, secretKey) => {
-  const str2Num = (str: string): number => {
-    return 54544564646;
-  };
+type encryptFuncType = (data: PixelBuffer, key: string) => Promise<PixelBuffer>;
+
+const encrypt: encryptFuncType = async (data, secretKey) => {
+  const { buffer, width, height, name } = data;
   // 混沌初始化，生成随机数种子
   const initChaos = (seed: number) => {
     const x = seed;
@@ -11,8 +11,9 @@ const encrypt: encryptFuncType = (pixelData, secretKey) => {
     const z = seed * seed * seed;
     return [x, y, z];
   };
-  const dataLength = pixelData.byteLength;
-  const pixelBuffer = new Uint8Array(pixelData);
+  const { str2Num } = await import("@/utils/string");
+  const dataLength = buffer.byteLength;
+  const pixelBuffer = new Uint8Array(buffer);
   const tempBuffer = new Uint8Array(dataLength);
   tempBuffer.set(pixelBuffer);
   const key = str2Num(secretKey);
@@ -26,7 +27,12 @@ const encrypt: encryptFuncType = (pixelData, secretKey) => {
   }
 
   pixelBuffer.set(tempBuffer);
-  return pixelBuffer.buffer;
+  return {
+    buffer: pixelBuffer.buffer,
+    width,
+    height,
+    name,
+  };
 };
 const decrypt = encrypt;
 

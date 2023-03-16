@@ -32,6 +32,25 @@ export default function Encryption() {
     );
   };
   /**
+   * 删除生成文件
+   */
+  const handleFilePairRemove = (revoke: (url: string) => void, md5: string) => {
+    const pairIndex = filePair.findIndex((pair) => pair[0].md5 === md5);
+    if (pairIndex == -1) {
+      return;
+    }
+    //删除生成列表中的文件
+    const pair = filePair[pairIndex];
+    if (pair) {
+      revoke(pair[1].src);
+      setFilePair(
+        produce((draft) => {
+          draft.splice(pairIndex, 1);
+        })
+      );
+    }
+  };
+  /**
    * 删除上传文件
    */
   const handleFileListRemove = (revoke: (url: string) => void, md5: string) => {
@@ -39,6 +58,7 @@ export default function Encryption() {
     if (fileIndex == -1) {
       return;
     }
+    //删除上传列表中的文件
     const file = fileList[fileIndex];
     revoke(file.src);
     setFileList(
@@ -46,16 +66,7 @@ export default function Encryption() {
         draft.splice(fileIndex, 1);
       })
     );
-    //删除生成列表中的文件
-    const pair = filePair[fileIndex];
-    if (pair) {
-      revoke(pair[1].src);
-      setFilePair(
-        produce((draft) => {
-          draft.splice(fileIndex, 1);
-        })
-      );
-    }
+    handleFilePairRemove(revoke, md5);
   };
   /**
    * 初始化图片服务
@@ -96,6 +107,16 @@ export default function Encryption() {
   //   );
   // };
   /**
+   * 当前进度
+   */
+  const progress = useMemo(() => {
+    return filePair.length / fileList.length;
+  }, [filePair.length, fileList.length]);
+  /**
+   * 进度条是否显示
+   */
+  const isProgressShow = useMemo(() => progress > 0, [progress]);
+  /**
    * 开始加密
    */
   const handleStart = async (options: ControlOptionType) => {
@@ -105,6 +126,10 @@ export default function Encryption() {
     //开始加密
     setIsEncrypting(true);
     setFilePair([]);
+    //如果有全是新上传的文件，清空生成列表
+    // if (progress === 1) {
+    //   setFilePair([]);
+    // }
     try {
       //获取结果
       const resList = imageService.current.processing(fileList, options);
@@ -122,26 +147,16 @@ export default function Encryption() {
       setIsEncrypting(false);
     }
     /*  //已处理个数
-    let doneCount = 0;
-    //处理加密结果
-    resList.forEach(async (promisePair) => {
-      const pair = await promisePair;
-      if (++doneCount === fileList.length) {
-        setIsEncrypting(false);
-      }
-      //handleGenerateResult?.(pair);
-    }); */
+      let doneCount = 0;
+      //处理加密结果
+      resList.forEach(async (promisePair) => {
+        const pair = await promisePair;
+        if (++doneCount === fileList.length) {
+          setIsEncrypting(false);
+        }
+        //handleGenerateResult?.(pair);
+      }); */
   };
-  /**
-   * 当前进度
-   */
-  const progress = useMemo(() => {
-    return filePair.length / fileList.length;
-  }, [filePair.length, fileList.length]);
-  /**
-   * 进度条是否显示
-   */
-  const isProgressShow = useMemo(() => progress > 0, [progress]);
   return (
     <div className="h-full grid grid-rows-2 grid-cols-[minmax(300px,auto)_minmax(300px,400px)] gap-3">
       <div className="border-2 border-gray-200 rounded-lg p-2">
@@ -166,7 +181,7 @@ export default function Encryption() {
       </div>
       <div className="flex flex-col col-span-2">
         <div className="flex-1 border-2 rounded-lg overflow-hidden">
-          <OutPut pairList={filePair} onRemove={handleFileListRemove} />
+          <OutPut pairList={filePair} onRemove={handleFilePairRemove} />
         </div>
         <div
           className={`p-2 mt-3 border-2 border-gray-200 shadow-sm rounded-lg ${

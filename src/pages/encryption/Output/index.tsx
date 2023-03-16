@@ -32,6 +32,7 @@ const ImageWrapper = ({
 export default function Output({
   pairList,
   className,
+  onRemove,
 }: {
   pairList: [FileType, FileType][];
   className?: string;
@@ -55,6 +56,12 @@ export default function Output({
     setEditImage(null);
   };
   /**
+   * 删除图像
+   */
+  const handleRemove = (md5: string) => {
+    onRemove?.(URL.revokeObjectURL, md5);
+  };
+  /**
    * 生成表格数据
    */
   const generateData = () =>
@@ -74,7 +81,10 @@ export default function Output({
       ),
       compressionRatio: getCompressionRate(originFile.file, encryptFile.file),
       operate: (
-        <span className="cursor-pointer text-red-400 font-semibold text-sm underline underline-offset-2">
+        <span
+          onClick={() => handleRemove(originFile.md5)}
+          className="cursor-pointer select-none text-red-400 font-semibold text-sm underline underline-offset-2"
+        >
           删除
         </span>
       ),
@@ -82,7 +92,7 @@ export default function Output({
 
   return (
     <Fragment>
-      <div className="relative w-full h-full">
+      <div className={`relative w-full h-full ${className ?? ""}`}>
         <div className="absolute w-full h-full overflow-y-auto">
           <Table columns={columns} data={generateData()}></Table>
         </div>
