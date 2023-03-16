@@ -9,7 +9,7 @@ import CardSelect from "@/components/CardSelect";
 
 const Item = (props: { label: string; children?: React.ReactNode }) => {
   return (
-    <div className="flex items-center mb-4">
+    <div className="flex items-center mb-5">
       <div
         className="w-[64px] mr-3 whitespace-nowrap text-justify"
         style={{ textAlignLast: "justify" }}
@@ -40,14 +40,10 @@ export default function ControlPanel({
   );
   //密钥
   const [key, setKey] = useState<string>("");
-  //是否开启密钥隐写
-  const [isEmbedKey, setIsEmbedKey] = useState(false);
   //图像格式
   const [format, setFormat] = useState<ImageFormatType>("");
   //图片质量
   const [quality, setQuality] = useState(100);
-  //是否禁用密钥输入
-  const [isKeyDisabled, setIsKeyDisabled] = useState(false);
   //是否禁用图像质量
   const [isQualityDisabled, setIsQualityDisabled] = useState(false);
   /**
@@ -58,7 +54,6 @@ export default function ControlPanel({
       pluginName,
       optionName,
       key,
-      isEmbedKey,
       format,
       quality,
     });
@@ -108,13 +103,6 @@ export default function ControlPanel({
   };
 
   /**
-   * 密钥隐写功能开关
-   */
-  const handleEmbedKeyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setIsEmbedKey(event.target.checked);
-  };
-
-  /**
    * 渲染插件已选择的内容
    */
   const renderPluginSelected = (option: Plugin) => {
@@ -152,11 +140,6 @@ export default function ControlPanel({
       </button>
     );
   };
-  //key输入框是否禁用
-  useEffect(() => {
-    setIsKeyDisabled(optionName === "decrypt" && isEmbedKey);
-  }, [isEmbedKey, optionName]);
-
   //图像质量输入框是否禁用
   useEffect(() => {
     const disabledResult =
@@ -182,7 +165,7 @@ export default function ControlPanel({
   }, [quality]);
 
   return (
-    <div className={`text-gray-600 p-2 ${className ?? ""}`}>
+    <div className={`text-gray-600 p-3 ${className ?? ""}`}>
       {/* 算法列表 */}
       <List
         options={pluginList}
@@ -191,7 +174,7 @@ export default function ControlPanel({
         renderSelected={renderPluginSelected}
         renderList={renderPluginList}
         renderFooter={renderPluginListFooter}
-        className="mb-4"
+        className="mb-5"
       ></List>
 
       {/* 选择操作 */}
@@ -199,6 +182,7 @@ export default function ControlPanel({
         options={OPTION_CARDS}
         disabled={disabled}
         onChange={handleOptionChange}
+        className="mb-5"
       />
 
       {/* 秘钥 */}
@@ -206,26 +190,14 @@ export default function ControlPanel({
         <input
           type="text"
           value={key}
-          disabled={disabled || isKeyDisabled}
+          disabled={disabled}
           onChange={handleKeyChange}
           className={`${
-            isKeyDisabled ? "!bg-gray-200" : ""
+            disabled ? "!bg-gray-200" : ""
           } bg-gray-50 border flex-1 border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 py-2 px-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
         />
       </Item>
-      {/* 是否隐写秘钥 */}
-      <Item label="秘钥隐写">
-        <label className="relative inline-flex items-center cursor-pointer">
-          <input
-            type="checkbox"
-            checked={isEmbedKey}
-            disabled={disabled}
-            onChange={handleEmbedKeyChange}
-            className="sr-only peer"
-          />
-          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-        </label>
-      </Item>
+
       {/* 文件格式 */}
       <Item label="文件格式">
         <List
