@@ -323,7 +323,13 @@ const ModalContent: React.FC<ModalContentProps> = ({
               src={imageFile?.src}
               onLoad={handleImageLoad}
               className="transition-all duration-75"
-              style={{ transform: `scale(${scale}) rotate(${rotate}deg)` }}
+              style={{
+                transform: `scale(${scale}) rotate(${rotate}deg)`,
+                backgroundImage: `linear-gradient(45deg, black 25%, transparent 25%, transparent 75%, black 75%),
+              linear-gradient(45deg, black 25%, transparent 25%, transparent 75%, black 75%)`,
+                backgroundSize: "40px 40px",
+                backgroundPosition: "0 0, 20px 20px",
+              }}
             />
           </ImageCrop>
         </div>

@@ -173,12 +173,14 @@ const Upload: React.FC<{
             key={file.md5}
             className="p-2 box-border relative w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-[12.5%]"
           >
-            <img
-              src={file.src}
-              alt={file.file.name}
-              onClick={() => handleOpenModal(file)}
-              className="w-full h-32 object-cover rounded border border-gray-200 cursor-pointer"
-            />
+            <a href={file.src} download={file.file.name}>
+              <img
+                src={file.src}
+                onClick={() => handleOpenModal(file)}
+                className="w-full h-32 object-cover rounded border border-gray-200 cursor-pointer"
+              />
+            </a>
+
             <button
               className="text-black absolute top-0 right-0"
               onClick={() => handleRemove(file.md5)}

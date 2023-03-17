@@ -7,16 +7,25 @@ import { capitalizeFirstLetter } from "@/utils/string";
 import { ControlOptionType, ImageFormatType } from "./type";
 import CardSelect from "@/components/CardSelect";
 
-const Item = (props: { label: string; children?: React.ReactNode }) => {
+const Item = (props: {
+  label: string;
+  children?: React.ReactNode;
+  message?: string;
+}) => {
   return (
-    <div className="flex items-center mb-5">
+    <div className="flex items-center mb-5 relative">
       <div
-        className="w-[64px] mr-3 whitespace-nowrap text-justify"
+        className="w-[64px] mr-3 whitespace-nowrap text-justify relative"
         style={{ textAlignLast: "justify" }}
       >
         {props.label}
       </div>
       {props.children}
+      {props.message && (
+        <span className="absolute ml-[32px] -bottom-[2px] left-1/2 -translate-x-1/2 translate-y-full text-xs text-red-400">
+          {props.message}
+        </span>
+      )}
     </div>
   );
 };
@@ -32,29 +41,54 @@ export default function ControlPanel({
   pluginList: Plugin[];
   disabled?: boolean;
 }) {
-  //插件名称
-  const [pluginName, setPluginName] = useState<string>("");
+  //插件索引
+  const [pluginIndex, setPluginIndex] = useState<number>(0);
   //选项卡名称
   const [optionName, setOptionName] = useState<"encrypt" | "decrypt">(
     "encrypt"
   );
   //密钥
   const [key, setKey] = useState<string>("");
-  //图像格式
-  const [format, setFormat] = useState<ImageFormatType>("");
+  //密钥错误信息
+  const [keyErrorMessage, setKeyErrorMessage] = useState<string>("");
+  //图像格式索引
+  const [formatIndex, setFormatIndex] = useState<number>(0);
   //图片质量
   const [quality, setQuality] = useState(100);
   //是否禁用图像质量
   const [isQualityDisabled, setIsQualityDisabled] = useState(false);
   /**
+   * 校验输入密钥
+   */
+  const validateKey = (key: string, keyRule?: Plugin["keyRule"] | null) => {
+    if (keyRule?.required && key === "") {
+      setKeyErrorMessage("秘钥不能为空");
+      return false;
+    } else if (
+      keyRule?.required &&
+      keyRule?.regex &&
+      !new RegExp(keyRule.regex).test(key)
+    ) {
+      setKeyErrorMessage(keyRule.message);
+      return false;
+    }
+    setKeyErrorMessage("");
+    return true;
+  };
+  /**
    * 开始加密
    */
   const handleStart = () => {
+    //校验密钥
+    const plugin = pluginList[pluginIndex];
+    if (!validateKey(key, plugin.keyRule)) {
+      return;
+    }
     onStart?.({
-      pluginName,
+      pluginName: plugin.name,
       optionName,
       key,
-      format,
+      format: IMAGE_FORMATS[formatIndex].value as ImageFormatType,
       quality: quality / 100,
     });
   };
@@ -63,8 +97,8 @@ export default function ControlPanel({
    * 选择算法插件改变
    * @param pluginName 插件名称
    */
-  const handlePluginChange = (plugin: Plugin) => {
-    setPluginName(plugin?.name ?? "");
+  const handlePluginChange = (index: number) => {
+    setPluginIndex(index);
   };
 
   /**
@@ -89,8 +123,8 @@ export default function ControlPanel({
   /**
    * 图像格式改变
    */
-  const handleImageFormatChange = ({ value }: { value: ImageFormatType }) => {
-    setFormat(value);
+  const handleImageFormatChange = (index: number) => {
+    setFormatIndex(index);
   };
 
   /**
@@ -100,6 +134,9 @@ export default function ControlPanel({
   const handleKeyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     setKey(value);
+    //校验密钥
+    const plugin = pluginList[pluginIndex];
+    validateKey(value, plugin?.keyRule);
   };
 
   /**
@@ -142,17 +179,14 @@ export default function ControlPanel({
   };
   //图像质量输入框是否禁用
   useEffect(() => {
+    const format = IMAGE_FORMATS[formatIndex].value;
     const disabledResult =
       format !== "image/jpeg" && format !== "image/webp" && format !== "";
     if (disabledResult) {
       setQuality(100);
     }
     setIsQualityDisabled(disabledResult);
-  }, [format]);
-  //pluginList改变时，重置插件名称
-  useEffect(() => {
-    setPluginName(pluginList[0]?.name ?? "");
-  }, [pluginList]);
+  }, [formatIndex]);
   //图像质量描述
   const qualityLabel = useMemo(() => {
     if (quality === 100) {
@@ -169,6 +203,7 @@ export default function ControlPanel({
       {/* 算法列表 */}
       <List
         options={pluginList}
+        checkedIndex={pluginIndex}
         disabled={disabled}
         onChange={handlePluginChange}
         renderSelected={renderPluginSelected}
@@ -186,7 +221,7 @@ export default function ControlPanel({
       />
 
       {/* 秘钥 */}
-      <Item label="秘钥">
+      <Item label="秘钥" message={keyErrorMessage}>
         <input
           type="text"
           value={key}
@@ -202,6 +237,7 @@ export default function ControlPanel({
       <Item label="文件格式">
         <List
           options={IMAGE_FORMATS}
+          checkedIndex={formatIndex}
           disabled={disabled}
           onChange={handleImageFormatChange}
           renderSelected={(item) => item.label}

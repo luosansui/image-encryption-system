@@ -179,7 +179,7 @@ export const processImageByWebGL = (
 ) => {
   // 定义顶点着色器代码
   const vertexShaderSource = `#version 300 es
-    precision mediump float;
+    precision highp float;
     layout (location = 0) in vec2 a_position;
     out vec2 v_texcoord;
     void main() {

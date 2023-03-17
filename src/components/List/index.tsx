@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 interface SelectProps {
   options: any[];
+  checkedIndex: number;
   onChange?: (value: any) => void;
   className?: string;
   renderSelected?: (option?: any) => JSX.Element | string;
@@ -11,6 +12,7 @@ interface SelectProps {
 
 const Select: React.FC<SelectProps> = ({
   options,
+  checkedIndex,
   className,
   onChange,
   renderSelected,
@@ -19,7 +21,6 @@ const Select: React.FC<SelectProps> = ({
   disabled,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedOption, setSelectedOption] = useState(0);
   //最大列表高度
   const [maxListHeight, setMaxListHeight] = useState(0);
   const ulRef = useRef<HTMLUListElement | null>(null);
@@ -29,8 +30,7 @@ const Select: React.FC<SelectProps> = ({
    * @param index 选中的option的index
    */
   const handleOptionClick = (index: number) => {
-    setSelectedOption(index);
-    onChange?.(options[index]);
+    onChange?.(index);
     setIsOpen(false);
   };
   //渲染选中的内容
@@ -83,7 +83,7 @@ const Select: React.FC<SelectProps> = ({
         disabled={disabled}
       >
         <span className="block truncate">
-          <SelectedRender option={options[selectedOption]} />
+          <SelectedRender option={options[checkedIndex]} />
         </span>
       </button>
       {isOpen && (
@@ -96,7 +96,7 @@ const Select: React.FC<SelectProps> = ({
               <li
                 key={index}
                 className={`px-3 py-2 my-1 cursor-pointer select-none hover:bg-gray-100 ${
-                  selectedOption === index ? "bg-gray-100 font-medium" : ""
+                  checkedIndex === index ? "bg-gray-100 font-medium" : ""
                 }`}
                 onClick={() => handleOptionClick(index)}
               >

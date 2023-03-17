@@ -6,14 +6,14 @@ import CustomModal from "@/components/CustomModal";
 import { getCompressionRate } from "@/utils/file";
 /**
  *
- * @param { src: string } 图片src
+ * @param { src: string, name:string } 图片src
  * @returns 图像缩略图
  */
 const ImageWrapper = ({
-  src,
+  file,
   onClick,
 }: {
-  src: string;
+  file: FileType;
   onClick?: React.MouseEventHandler<HTMLImageElement>;
 }) => {
   //处理点击事件
@@ -21,11 +21,13 @@ const ImageWrapper = ({
     onClick?.(e);
   };
   return (
-    <img
-      onClick={handleClick}
-      className="w-32 h-32 object-scale-down inline-block cursor-pointer"
-      src={src}
-    />
+    <a href={file.src} download={file.file.name}>
+      <img
+        src={file.src}
+        onClick={handleClick}
+        className="w-32 h-32 object-scale-down inline-block cursor-pointer bg-gray-100"
+      />
+    </a>
   );
 };
 
@@ -39,14 +41,19 @@ export default function Output({
   onRemove?: (revoke: (url: string) => void, md5: string) => void; //第一个参数revoke是为了显式的告诉外部需要释放url资源
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editImage, setEditImage] = useState<string | null>(null);
-
+  const [editImage, setEditImage] = useState<{
+    src: string;
+    name: string;
+  } | null>(null);
   /**
    * 打开图片裁剪模态框
    */
-  const handleOpenModal = (src: string) => {
+  const handleOpenModal = (src: string, name: string) => {
     setIsModalOpen(true);
-    setEditImage(src);
+    setEditImage({
+      src,
+      name,
+    });
   };
   /**
    * 关闭图片裁剪模态框
@@ -69,14 +76,16 @@ export default function Output({
       id: originFile.md5,
       origin: (
         <ImageWrapper
-          src={originFile.src}
-          onClick={() => handleOpenModal(originFile.src)}
+          file={originFile}
+          onClick={() => handleOpenModal(originFile.src, originFile.file.name)}
         />
       ),
       current: (
         <ImageWrapper
-          src={encryptFile.src}
-          onClick={() => handleOpenModal(encryptFile.src)}
+          file={encryptFile}
+          onClick={() =>
+            handleOpenModal(encryptFile.src, encryptFile.file.name)
+          }
         />
       ),
       compressionRatio: getCompressionRate(originFile.file, encryptFile.file),
@@ -101,18 +110,20 @@ export default function Output({
         isOpen={isModalOpen}
         className="w-full h-full flex justify-center items-center relative"
       >
-        <div className="w-full h-full overflow-auto p-6">
+        <div className="w-full h-full overflow-auto p-6 flex">
           {editImage && (
-            <img
-              src={editImage}
-              style={{
-                backgroundImage: `linear-gradient(45deg, black 25%, transparent 25%, transparent 75%, black 75%),
+            <a href={editImage?.src} download={editImage?.name}>
+              <img
+                src={editImage?.src}
+                style={{
+                  backgroundImage: `linear-gradient(45deg, black 25%, transparent 25%, transparent 75%, black 75%),
                 linear-gradient(45deg, black 25%, transparent 25%, transparent 75%, black 75%)`,
-                backgroundSize: "20px 20px",
-                backgroundPosition: "0 0, 10px 10px",
-              }}
-              className="m-auto "
-            />
+                  backgroundSize: "40px 40px",
+                  backgroundPosition: "0 0, 20px 20px",
+                }}
+                className="m-auto"
+              />
+            </a>
           )}
         </div>
 

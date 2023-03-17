@@ -11,7 +11,6 @@ import WorkerThread from "./worker?worker";
  */
 class ImageService {
   private readonly pluginService: PluginService = new PluginService(); //插件服务
-  private workService: WorkService | null = null; //多线程服务，需要时才初始化
   /**
    * 初始化，不处理任何错误，直接抛出
    */
@@ -97,18 +96,15 @@ class ImageService {
     if (files.length === 0) {
       return [];
     }
-    //实例化多线程服务
-    if (!this.workService) {
-      //获取较优线程数
-      const threadNum = getThreadsNumber(files.length);
-      this.workService = new WorkService(threadNum, exeFunc, WorkerThread);
-    }
+    //获取较优线程数，并实例化多线程服务
+    const threadNum = getThreadsNumber(files.length);
+    const workService = new WorkService(threadNum, exeFunc, WorkerThread);
     //执行操作
     const result = files.map(async (origin): Promise<[FileType, FileType]> => {
       //获取文件类型
       const MIME = format || origin.file.type;
       //执行操作
-      const fileWithOutSrc = await this.workService!.run<FileType>(
+      const fileWithOutSrc = await workService.run<FileType>(
         origin,
         key,
         MIME,
