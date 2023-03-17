@@ -135,3 +135,81 @@ export const file2Image = (file: File): Promise<HTMLImageElement> => {
 export const getCompressionRate = (origin: File, current: File) => {
   return `${Math.round((current.size / origin.size) * 10000) / 100} %`;
 };
+
+/**
+ * 将长方形图像填充为正方形，采用尾部填充的方式。
+ * @param data 要填充的像素数据
+ * @returns 填充后的像素数据
+ */
+export const padImageToSquare = (data: PixelBuffer): PixelBuffer => {
+  const { width, height, buffer, name } = data;
+  const maxDim = Math.max(width, height);
+  if (width === height) {
+    // 已经是正方形，无需填充
+    return data;
+  } else if (width > height) {
+    // 宽度大于高度，向下填充
+    const paddedBuffer = new Uint8Array(maxDim ** 2 * 4);
+    paddedBuffer.set(new Uint8Array(buffer));
+    return {
+      name,
+      width: maxDim,
+      height: maxDim,
+      buffer: paddedBuffer.buffer,
+    };
+  } else {
+    // 高度大于宽度，向右填充
+    const paddedBuffer = new Uint8Array(maxDim ** 2 * 4);
+    const rowSize = width * 4;
+    for (let i = 0; i < height; i++) {
+      const offset = i * rowSize;
+      paddedBuffer.set(
+        new Uint8Array(buffer, offset, rowSize),
+        offset + i * (maxDim - width) * 4
+      );
+    }
+    return {
+      name,
+      width: maxDim,
+      height: maxDim,
+      buffer: paddedBuffer.buffer,
+    };
+  }
+};
+/**
+
+将正方形图像还原为长方形，去除尾部填充的部分。
+@param data 要还原的像素数据
+@returns 还原后的像素数据
+*/
+export const restoreImageFromSquare = (data: PixelBuffer): PixelBuffer => {
+  const { width, height, buffer, name } = data;
+  if (width === height) {
+    // 已经是正方形，无需还原
+    return data;
+  } else if (width > height) {
+    // 宽度大于高度，从下面截取
+    const croppedBuffer = buffer.slice(0, height * width * 4);
+    return {
+      name,
+      width: width,
+      height: height,
+      buffer: croppedBuffer,
+    };
+  } else {
+    // 高度大于宽度，从右边截取
+    const rowSize = width * 4;
+    const croppedBuffer = new ArrayBuffer(height * rowSize);
+    const croppedRows = new Uint8Array(croppedBuffer);
+    for (let i = 0; i < height; i++) {
+      const offset = i * rowSize;
+      croppedRows.set(new Uint8Array(buffer, offset, rowSize), offset);
+    }
+    return {
+      name,
+      width: width,
+      height: height,
+      buffer: croppedBuffer,
+    };
+  }
+};
