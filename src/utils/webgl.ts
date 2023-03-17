@@ -175,7 +175,7 @@ export const createVertexBuffer = (
 export const processImageByWebGL = (
   data: PixelBuffer,
   fragmentShaderSource: string,
-  process?: (gl: WebGLRenderingContext) => any
+  process?: (gl: WebGLRenderingContext, program: WebGLProgram) => any
 ) => {
   // 定义顶点着色器代码
   const vertexShaderSource = `#version 300 es
@@ -217,12 +217,11 @@ export const processImageByWebGL = (
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
   gl.enableVertexAttribArray(0);
   gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 2 * 4, 0);
-  // 绑定纹理, 并反转 Y 轴
+  // 在默认的激活纹理单元上绑定纹理, 并反转 Y 轴
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
-  gl.getUniformLocation(program, "u_texture");
   // 执行自定义处理
-  process?.(gl);
+  process?.(gl, program);
   // 绘制
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   // 从缓冲区中读取输出数据

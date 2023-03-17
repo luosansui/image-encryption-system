@@ -99,9 +99,23 @@ export default function Output({
       </div>
       <CustomModal
         isOpen={isModalOpen}
-        className="w-full h-full flex justify-center items-center overflow-auto"
+        className="w-full h-full flex justify-center items-center relative"
       >
-        {editImage && <img src={editImage} className="pointer-events-none" />}
+        <div className="w-full h-full overflow-auto p-6">
+          {editImage && (
+            <img
+              src={editImage}
+              style={{
+                backgroundImage: `linear-gradient(45deg, black 25%, transparent 25%, transparent 75%, black 75%),
+                linear-gradient(45deg, black 25%, transparent 25%, transparent 75%, black 75%)`,
+                backgroundSize: "20px 20px",
+                backgroundPosition: "0 0, 10px 10px",
+              }}
+              className="m-auto "
+            />
+          )}
+        </div>
+
         <button
           className="text-black fixed top-3 right-3"
           onClick={handleCloseModal}
