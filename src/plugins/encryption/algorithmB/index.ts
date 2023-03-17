@@ -2,14 +2,14 @@ import { PixelBuffer } from "@/service/image/type";
 
 type encryptFuncType = (data: PixelBuffer, key: string) => Promise<PixelBuffer>;
 
-const encrypt: encryptFuncType = async (data, key) => {
+const encrypt: encryptFuncType = async (data, key: string) => {
   const { processImageByWebGL } = await import("@/utils/webgl");
   const { padImageToSquare } = await import("@/utils/file");
   // 将图像填充为正方形
   const paddedData = padImageToSquare(data);
   // 片段着色器
   const fragmentShader = `#version 300 es
-    precision mediump float;
+    precision highp float;
     uniform int u_iteration;
     uniform float u_size;
     uniform sampler2D u_texture;
@@ -29,7 +29,7 @@ const encrypt: encryptFuncType = async (data, key) => {
   const process = (gl: WebGLRenderingContext, program: WebGLProgram) => {
     // 获取 u_iteration 变量位置
     const iterationsLocation = gl.getUniformLocation(program, "u_iteration");
-    gl.uniform1i(iterationsLocation, 1);
+    gl.uniform1i(iterationsLocation, Number(key));
     // 获取 u_size 变量位置
     const sizeLocation = gl.getUniformLocation(program, "u_size");
     gl.uniform1f(sizeLocation, paddedData.width);
@@ -43,7 +43,7 @@ const decrypt = async (data: PixelBuffer, key: string) => {
   const { restoreImageFromSquare } = await import("@/utils/file");
   // 片段着色器
   const fragmentShader = `#version 300 es
-  precision mediump float;
+  precision highp float;
   uniform int u_iterations;
   uniform float u_size;
   uniform sampler2D u_texture;
@@ -63,7 +63,7 @@ const decrypt = async (data: PixelBuffer, key: string) => {
   const process = (gl: WebGLRenderingContext, program: WebGLProgram) => {
     // 获取 u_iterations 变量位置
     const iterationsLocation = gl.getUniformLocation(program, "u_iterations");
-    gl.uniform1i(iterationsLocation, 1);
+    gl.uniform1i(iterationsLocation, Number(key));
     // 获取 u_size 变量位置
     const sizeLocation = gl.getUniformLocation(program, "u_size");
     gl.uniform1f(sizeLocation, data.width);

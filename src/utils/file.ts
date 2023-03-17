@@ -1,5 +1,6 @@
 import { PixelBuffer } from "@/service/image/type";
 import SparkMD5 from "spark-md5";
+import { getNewFileName } from "./string";
 
 /**
  * 计算文件的 MD5 值
@@ -99,11 +100,14 @@ export async function pixelsBuffer2File(
     "2d"
   ) as OffscreenCanvasRenderingContext2D;
   ctx.putImageData(imageData, 0, 0);
+  //TODO: 这里type无效
   const blob = await (offscreenCanvas as any).convertToBlob({
     type,
     quality,
   });
-  return new File([blob], name, { type: blob.type });
+  //处理文件名
+  const newName = getNewFileName(name, type);
+  return new File([blob], `new-${newName}`, { type: blob.type });
 }
 /**
  *

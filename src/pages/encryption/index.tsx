@@ -21,6 +21,9 @@ export default function Encryption() {
   const imageService = useRef<ImageService | null>(null);
   //是否正在加密
   const [isEncrypting, setIsEncrypting] = useState(false);
+  useEffect(() => {
+    console.log("filePair", filePair);
+  }, [filePair]);
   /**
    * 新增上传文件
    */
