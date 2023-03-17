@@ -106,7 +106,7 @@ export async function pixelsBuffer2File(
     quality,
   });
   //处理文件名
-  const newName = getNewFileName(name, type);
+  const newName = getNewFileName(name, blob.type);
   return new File([blob], `new-${newName}`, { type: blob.type });
 }
 /**
