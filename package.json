@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "flowbite": "^1.6.3",
+    "gl-matrix": "^3.4.3",
     "immer": "^9.0.19",
     "p-limit": "^4.0.0",
     "react": "^18.2.0",

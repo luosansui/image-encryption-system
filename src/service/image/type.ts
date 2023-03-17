@@ -1,8 +1,3 @@
-import { FileType } from "@/components/Upload/type";
-import {
-  ControlOptionType,
-  ImageFormatType,
-} from "@/pages/encryption/ControlPanel/type";
 import { Plugin } from "@/service/plugin/type";
 
 export type encryptFuncType = (
