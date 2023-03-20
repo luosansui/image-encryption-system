@@ -128,7 +128,11 @@ const Upload: React.FC<{
   /**
    * 打开图片裁剪模态框
    */
-  const handleOpenModal = (image: FileType) => {
+  const handleOpenModal = (
+    event: React.MouseEvent<HTMLImageElement>,
+    image: FileType
+  ) => {
+    event.preventDefault();
     setIsModalOpen(true);
     setEditImageFile(image);
   };
@@ -173,10 +177,14 @@ const Upload: React.FC<{
             key={file.md5}
             className="p-2 box-border relative w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-[12.5%]"
           >
-            <a href={file.src} download={file.file.name}>
+            <a
+              href={file.src}
+              download={file.file.name}
+              className="inline-block"
+            >
               <img
                 src={file.src}
-                onClick={() => handleOpenModal(file)}
+                onClick={(e) => handleOpenModal(e, file)}
                 className="w-full h-32 object-cover rounded border border-gray-200 cursor-pointer"
               />
             </a>

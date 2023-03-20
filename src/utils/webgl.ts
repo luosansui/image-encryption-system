@@ -8,11 +8,10 @@ import { PixelBuffer } from "@/service/image/type";
 export const createWebGLContext = <T>(
   width: number,
   height: number,
-  version: number | string
+  type: OffscreenRenderingContextId
 ): T => {
   const canvas = new OffscreenCanvas(width, height);
-  const ctxType = version.toString().trim().endsWith("2") ? "webgl2" : "webgl";
-  const gl = canvas.getContext(ctxType, {
+  const gl = canvas.getContext(type, {
     preserveDrawingBuffer: true, //阻止保留绘制缓冲区
   }) as T;
   //gl不能为null
@@ -83,27 +82,23 @@ export const linkShader = (
  */
 export const createWebGLProgram = (
   gl: WebGLRenderingContext,
-  vertexShaderSource: string,
-  fragmentShaderSource: string
+  shadersType: number[],
+  shadersSource: string[]
 ): WebGLProgram => {
-  const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
-  const fragmentShader = compileShader(
-    gl,
-    gl.FRAGMENT_SHADER,
-    fragmentShaderSource
-  );
+  if (shadersType.length !== shadersSource.length) {
+    throw new Error("shadersType length not equal shadersSource length");
+  }
+  const shaders = [];
+  for (let i = 0; i < shadersSource.length; i++) {
+    const shader = compileShader(gl, shadersType[i], shadersSource[i]);
+    shaders.push(shader);
+  }
   const shaderProgram = gl.createProgram();
   //shaderProgram不能为null
   if (!shaderProgram) {
     throw new Error("WebGL Program Create Error");
   }
-  const linkedShaderProgram = linkShader(
-    gl,
-    shaderProgram,
-    vertexShader,
-    fragmentShader
-  );
-  return linkedShaderProgram;
+  return linkShader(gl, shaderProgram, ...shaders);
 };
 
 /**
@@ -167,16 +162,17 @@ export const createVertexBuffer = (
   return positionBuffer;
 };
 /**
- * 通过WebGL处理图像并返回结果
+ * 通过WebGL渲染图像
+ * 普通渲染管线不适合进行通用计算，因此不推荐使用该函数对图像进行通用计算处理
  * @param data 输入图像数据
  * @param fragmentShaderSource 片元着色器源码
  * @param process 中间处理函数
  */
-export const processImageByWebGL = (
+export const renderImageByWebGL2 = (
   data: PixelBuffer,
   fragmentShaderSource: string,
-  process?: (gl: WebGLRenderingContext, program: WebGLProgram) => any
-) => {
+  process?: (gl: WebGL2RenderingContext, program: WebGLProgram) => any
+): PixelBuffer => {
   // 定义顶点着色器代码
   const vertexShaderSource = `#version 300 es
     precision highp float;
@@ -193,12 +189,16 @@ export const processImageByWebGL = (
   const outputBuffer = new ArrayBuffer(buffer.byteLength);
   const outputData = new Uint8Array(outputBuffer);
   // 创建 WebGL 上下文
-  const gl = createWebGLContext<WebGL2RenderingContext>(width, height, 2);
+  const gl = createWebGLContext<WebGL2RenderingContext>(
+    width,
+    height,
+    "webgl2"
+  );
   // 创建 WebGL 程序
   const program = createWebGLProgram(
     gl,
-    vertexShaderSource,
-    fragmentShaderSource
+    [gl.VERTEX_SHADER, gl.FRAGMENT_SHADER],
+    [vertexShaderSource, fragmentShaderSource]
   );
   // 设置 WebGL 视口
   gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);

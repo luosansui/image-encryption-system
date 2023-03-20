@@ -14,14 +14,15 @@ const ImageWrapper = ({
   onClick,
 }: {
   file: FileType;
-  onClick?: React.MouseEventHandler<HTMLImageElement>;
+  onClick?: () => void;
 }) => {
   //处理点击事件
-  const handleClick = (e: React.MouseEvent<HTMLImageElement>) => {
-    onClick?.(e);
+  const handleClick = (event: React.MouseEvent<HTMLImageElement>) => {
+    event.preventDefault();
+    onClick?.();
   };
   return (
-    <a href={file.src} download={file.file.name}>
+    <a href={file.src} download={file.file.name} className="inline-block">
       <img
         src={file.src}
         onClick={handleClick}
@@ -112,7 +113,12 @@ export default function Output({
       >
         <div className="w-full h-full overflow-auto p-6 flex">
           {editImage && (
-            <a href={editImage?.src} download={editImage?.name}>
+            <a
+              href={editImage?.src}
+              download={editImage?.name}
+              className="m-auto"
+              onClick={(e) => e.preventDefault()}
+            >
               <img
                 src={editImage?.src}
                 style={{
@@ -121,7 +127,6 @@ export default function Output({
                   backgroundSize: "40px 40px",
                   backgroundPosition: "0 0, 20px 20px",
                 }}
-                className="m-auto"
               />
             </a>
           )}
