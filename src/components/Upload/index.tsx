@@ -1,10 +1,10 @@
 import { calculateMD5 } from "@/utils/file";
-import React, { Fragment, useEffect, useState } from "react";
+import React, { Fragment, useEffect, useRef, useState } from "react";
 import Dropzone from "react-dropzone";
 import pLimit from "p-limit";
 import { produce } from "immer";
 import { FileType } from "@/components/Upload/type";
-import ImageCropModal from "../ImageCrop";
+import ImageCrop from "../ImageCrop";
 
 const Upload: React.FC<{
   list?: FileType[];
@@ -13,10 +13,14 @@ const Upload: React.FC<{
   className?: string;
 }> = ({ list, onAdd, onRemove, className }) => {
   const [files, setFiles] = useState<FileType[]>(list || []);
+  //保存当前文件的MD5集合，用于过滤重复文件
+  const fileHashSet = useRef(new Set<string>());
   //打开图片裁剪模态框
   const [isModalOpen, setIsModalOpen] = useState(false);
   //要编辑的图片
   const [editImageFile, setEditImageFile] = useState<FileType | null>(null);
+  //是否正在上传
+  const [isUploading, setIsUploading] = useState(false);
   //当外部传入的list时，该组件为受控组件
   useEffect(() => {
     if (list !== undefined) {
@@ -30,33 +34,28 @@ const Upload: React.FC<{
    * @param acceptedMD5s 已经计算的md5列表
    * @returns 不重复的文件列表
    */
-  async function filterDuplicateFiles(
+  const filterDuplicateFiles = (
     fileList: File[],
     acceptedMD5s: string[]
-  ) {
+  ): Promise<FileType | null>[] => {
     const limit = pLimit(3);
-    const uniqueFiles: FileType[] = [];
-    //当前所有文件的md5集合
-    const fileHashSet = new Set(files.map((file) => file.md5));
-    await Promise.all(
-      fileList.map(async (file, index) => {
-        try {
-          const md5 =
-            acceptedMD5s[index] ?? (await limit(() => calculateMD5(file)));
-          if (!fileHashSet.has(md5)) {
-            fileHashSet.add(md5);
-            const src = URL.createObjectURL(file);
-            uniqueFiles.push({ file, md5, src });
-          }
-        } catch (error) {
-          console.error(error);
+    return fileList.map(async (file, index) => {
+      try {
+        const md5 =
+          acceptedMD5s[index] ?? (await limit(() => calculateMD5(file)));
+        if (!fileHashSet.current.has(md5)) {
+          fileHashSet.current.add(md5);
+          const src = URL.createObjectURL(file);
+          return { file, md5, src };
         }
-      })
-    );
-    return uniqueFiles;
-  }
+      } catch (error) {
+        console.error(error);
+      }
+      return null;
+    });
+  };
 
-  const handleDrop = async (acceptedFiles: File[]) => {
+  const handleDrop = (acceptedFiles: File[]) => {
     handleAdd(acceptedFiles);
   };
 
@@ -65,21 +64,37 @@ const Upload: React.FC<{
     acceptedMD5s: string[] = [],
     insertIndex = files.length
   ) => {
-    const newFiles = await filterDuplicateFiles(acceptedFiles, acceptedMD5s);
-    //当外部没有传入的list时，该组件为非受控组件，直接更新状态
-    if (list === undefined) {
-      console.log("[[非受控组件]]: Add File");
-      setFiles(
-        produce((draftState) => {
-          draftState.splice(insertIndex, 0, ...newFiles);
-        })
+    setIsUploading(true);
+    //过滤重复文件
+    const newFiles = filterDuplicateFiles(acceptedFiles, acceptedMD5s);
+    //等待文件计算MD5完成
+    for (let i = 0; i < newFiles.length; i += 3) {
+      const result = await Promise.all(newFiles.slice(i, i + 3));
+      //过滤掉重复文件
+      const resultWithoutNull = result.filter(
+        (item): item is FileType => item !== null
       );
+      if (resultWithoutNull.length > 0) {
+        //当外部没有传入的list时，该组件为非受控组件，直接更新状态
+        if (list === undefined) {
+          console.log("[[非受控组件]]: Add File");
+          setFiles(
+            produce((draftState) => {
+              draftState.splice(insertIndex + i, 0, ...resultWithoutNull);
+            })
+          );
+        } else {
+          //通知外部变更
+          onAdd?.(resultWithoutNull, insertIndex + i);
+        }
+      }
     }
-    //通知外部变更
-    onAdd?.(newFiles, insertIndex);
+    setIsUploading(false);
   };
 
   const handleRemove = (md5: string) => {
+    //从fileHashSet中移除
+    fileHashSet.current.delete(md5);
     //当外部没有传入的list时，该组件为非受控组件，直接更新状态
     if (list === undefined) {
       const fileIndex = files.findIndex((file) => file.md5 === md5);
@@ -113,7 +128,11 @@ const Upload: React.FC<{
   /**
    * 打开图片裁剪模态框
    */
-  const handleOpenModal = (image: FileType) => {
+  const handleOpenModal = (
+    event: React.MouseEvent<HTMLImageElement>,
+    image: FileType
+  ) => {
+    event.preventDefault();
     setIsModalOpen(true);
     setEditImageFile(image);
   };
@@ -127,7 +146,7 @@ const Upload: React.FC<{
   return (
     <Fragment>
       <div className={`flex flex-wrap ${className ?? ""}`}>
-        <Dropzone onDrop={handleDrop}>
+        <Dropzone onDrop={handleDrop} disabled={isUploading}>
           {({ getRootProps, getInputProps }) => (
             <div className="sticky top-0 p-2 box-border w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-[12.5%]">
               <div
@@ -158,12 +177,18 @@ const Upload: React.FC<{
             key={file.md5}
             className="p-2 box-border relative w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-[12.5%]"
           >
-            <img
-              src={file.src}
-              alt={file.file.name}
-              onClick={() => handleOpenModal(file)}
-              className="w-full h-32 object-cover rounded border border-gray-200 cursor-pointer"
-            />
+            <a
+              href={file.src}
+              download={file.file.name}
+              className="inline-block"
+            >
+              <img
+                src={file.src}
+                onClick={(e) => handleOpenModal(e, file)}
+                className="w-full h-32 object-cover rounded border border-gray-200 cursor-pointer"
+              />
+            </a>
+
             <button
               className="text-black absolute top-0 right-0"
               onClick={() => handleRemove(file.md5)}
@@ -188,7 +213,7 @@ const Upload: React.FC<{
           </div>
         ))}
       </div>
-      <ImageCropModal
+      <ImageCrop
         imageFile={editImageFile}
         isOpen={isModalOpen}
         onClose={handleCloseModal}

@@ -1,23 +1,21 @@
 import { FileType } from "@/components/Upload/type";
+import { ControlOptionType } from "@/pages/encryption/ControlPanel/type";
 import PluginService from "@/service/plugin";
 import { Plugin } from "@/service/plugin/type";
 import { getThreadsNumber } from "@/utils";
-import { FileCache } from "../cache";
 import WorkService from "../worker";
-import { encryptFuncType, PluginJson, processImageFuncArgsType } from "./type";
+import { encryptFuncType, PluginJson } from "./type";
 import WorkerThread from "./worker?worker";
 /**
  * 图像服务
  */
 class ImageService {
   private readonly pluginService: PluginService = new PluginService(); //插件服务
-  private readonly originFileCache: FileCache = new FileCache(); //缓存服务
-  private workService: WorkService | null = null; //多线程服务，需要时才初始化
   /**
    * 初始化，不处理任何错误，直接抛出
    */
   public async initService() {
-    const modules = import.meta.glob("@/plugins/**");
+    const modules = import.meta.glob("@/plugins/encryption/**");
     const modulesKeySet = new Set(
       Object.keys(modules).map((key) => key.replace(/\.[^/.]+$/, ""))
     );
@@ -61,27 +59,6 @@ class ImageService {
     return this.pluginService.getPlugins();
   }
   /**
-   * 图像解密，不处理任何错误，直接抛出
-   * @param pluginName 算法名称
-   * @param files 图像列表
-   * @param secretKey 密钥
-   * @returns
-   */
-  public encrypt(...args: processImageFuncArgsType) {
-    return this.processing(...args, "encrypt");
-  }
-  /**
-   * 图像解密，不处理任何错误，直接抛出
-   * @param pluginName 算法名称
-   * @param files 图像列表
-   * @param secretKey 密钥
-   * @returns
-   */
-  public decrypt(...args: processImageFuncArgsType) {
-    return this.processing(...args, "decrypt");
-  }
-
-  /**
    * 获取算法实例，不处理任何错误，直接抛出
    * @param pluginName 插件名称
    * @returns 插件实例
@@ -105,53 +82,40 @@ class ImageService {
     }
     return { encrypt, decrypt };
   }
+
   /**
-   * 图像处理，不处理任何错误，直接抛出
-   * @param pluginName 算法名称
+   * 图像处理,不处理错误直接抛出
    * @param files 图像列表
-   * @param secretKey 密钥
+   * @param options 详细操作
    * @returns
    */
-  private processing(
-    pluginName: string,
-    files: FileType[],
-    secretKey: string,
-    type: "encrypt" | "decrypt"
-  ) {
+  public processing(files: FileType[], options: ControlOptionType) {
     //获取算法实例
-    const exeFunc = this.getInstance(pluginName)[type];
-    //缓存服务,已经解密过的文件不再解密
-    if (!this.originFileCache) {
-      throw new Error("缓存服务未初始化");
-    }
-    //从缓存服务中过滤未解密过的文件
-    const unProcessedFiles = this.originFileCache.filterNotHas(files);
-    if (unProcessedFiles.length === 0) {
+    const { pluginName, optionName, key, quality, format } = options;
+    const exeFunc = this.getInstance(pluginName)[optionName];
+    if (files.length === 0) {
       return [];
     }
-    //实例化多线程服务
-    if (!this.workService) {
-      //获取较优线程数
-      const threadNum = getThreadsNumber(unProcessedFiles.length);
-      this.workService = new WorkService(threadNum, exeFunc, WorkerThread);
-    }
+    //获取较优线程数，并实例化多线程服务
+    const threadNum = getThreadsNumber(files.length);
+    const workService = new WorkService(threadNum, exeFunc, WorkerThread);
     //执行操作
-    const result = unProcessedFiles.map(
-      async (origin): Promise<[FileType, FileType]> => {
-        const fileWithOutSrc = await this.workService!.run<FileType>(
-          origin,
-          secretKey,
-          "image/png"
-        );
-        const newFile = {
-          ...fileWithOutSrc,
-          src: URL.createObjectURL(fileWithOutSrc.file),
-        };
-        //原图计入缓存
-        this.originFileCache.add(origin);
-        return [origin, newFile];
-      }
-    );
+    const result = files.map(async (origin): Promise<[FileType, FileType]> => {
+      //获取文件类型
+      const MIME = format || origin.file.type;
+      //执行操作
+      const fileWithOutSrc = await workService.run<FileType>(
+        origin,
+        key,
+        MIME,
+        quality
+      );
+      const newFile = {
+        ...fileWithOutSrc,
+        src: URL.createObjectURL(fileWithOutSrc.file),
+      };
+      return [origin, newFile];
+    });
     return result;
   }
 }

@@ -1,7 +1,6 @@
 import { PixelBuffer } from "@/service/image/type";
 import SparkMD5 from "spark-md5";
-
-export type ProgressCallback = (progress: number) => void;
+import { getNewFileName } from "./string";
 
 /**
  * 计算文件的 MD5 值
@@ -11,7 +10,7 @@ export type ProgressCallback = (progress: number) => void;
  */
 export function calculateMD5(
   file: File,
-  onProgress?: ProgressCallback
+  onProgress?: (progress: number) => void
 ): Promise<string> {
   const fileSize = file.size;
   const chunkSize = 1024 * 1024 * 10; // 每片 10MB
@@ -91,7 +90,8 @@ export async function file2PixelsBuffer(file: File): Promise<PixelBuffer> {
  */
 export async function pixelsBuffer2File(
   pixelBuffer: PixelBuffer,
-  type: string
+  type: string,
+  quality = 1
 ): Promise<File> {
   const { buffer, width, height, name } = pixelBuffer;
   const imageData = new ImageData(new Uint8ClampedArray(buffer), width, height);
@@ -100,8 +100,14 @@ export async function pixelsBuffer2File(
     "2d"
   ) as OffscreenCanvasRenderingContext2D;
   ctx.putImageData(imageData, 0, 0);
-  const blob = await (offscreenCanvas as any).convertToBlob({ type });
-  return new File([blob], name, { type: blob.type });
+  //TODO: 这里type无效
+  const blob = await (offscreenCanvas as any).convertToBlob({
+    type,
+    quality,
+  });
+  //处理文件名
+  const newName = getNewFileName(name, blob.type);
+  return new File([blob], `new-${newName}`, { type: blob.type });
 }
 /**
  *
@@ -124,4 +130,90 @@ export const file2Image = (file: File): Promise<HTMLImageElement> => {
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
+};
+/**
+ * @param origin File格式图像文件
+ * @param current File格式图像文件
+ * @returns 压缩率
+ */
+export const getCompressionRate = (origin: File, current: File) => {
+  return `${Math.round((current.size / origin.size) * 10000) / 100} %`;
+};
+
+/**
+ * 将长方形图像填充为正方形，采用尾部填充的方式。
+ * @param data 要填充的像素数据
+ * @returns 填充后的像素数据
+ */
+export const padImageToSquare = (data: PixelBuffer): PixelBuffer => {
+  const { width, height, buffer, name } = data;
+  const maxDim = Math.max(width, height);
+  if (width === height) {
+    // 已经是正方形，无需填充
+    return data;
+  } else if (width > height) {
+    // 宽度大于高度，向下填充
+    const paddedBuffer = new Uint8Array(maxDim ** 2 * 4);
+    paddedBuffer.set(new Uint8Array(buffer));
+    return {
+      name,
+      width: maxDim,
+      height: maxDim,
+      buffer: paddedBuffer.buffer,
+    };
+  } else {
+    // 高度大于宽度，向右填充
+    const paddedBuffer = new Uint8Array(maxDim ** 2 * 4);
+    const rowSize = width * 4;
+    for (let i = 0; i < height; i++) {
+      const offset = i * rowSize;
+      paddedBuffer.set(
+        new Uint8Array(buffer, offset, rowSize),
+        offset + i * (maxDim - width) * 4
+      );
+    }
+    return {
+      name,
+      width: maxDim,
+      height: maxDim,
+      buffer: paddedBuffer.buffer,
+    };
+  }
+};
+/**
+
+将正方形图像还原为长方形，去除尾部填充的部分。
+@param data 要还原的像素数据
+@returns 还原后的像素数据
+*/
+export const restoreImageFromSquare = (data: PixelBuffer): PixelBuffer => {
+  const { width, height, buffer, name } = data;
+  if (width === height) {
+    // 已经是正方形，无需还原
+    return data;
+  } else if (width > height) {
+    // 宽度大于高度，从下面截取
+    const croppedBuffer = buffer.slice(0, height * width * 4);
+    return {
+      name,
+      width: width,
+      height: height,
+      buffer: croppedBuffer,
+    };
+  } else {
+    // 高度大于宽度，从右边截取
+    const rowSize = width * 4;
+    const croppedBuffer = new ArrayBuffer(height * rowSize);
+    const croppedRows = new Uint8Array(croppedBuffer);
+    for (let i = 0; i < height; i++) {
+      const offset = i * rowSize;
+      croppedRows.set(new Uint8Array(buffer, offset, rowSize), offset);
+    }
+    return {
+      name,
+      width: width,
+      height: height,
+      buffer: croppedBuffer,
+    };
+  }
 };
