@@ -2,80 +2,94 @@ import { PixelBuffer } from "@/service/image/type";
 
 type encryptFuncType = (data: PixelBuffer, key: string) => Promise<PixelBuffer>;
 
-const encrypt: encryptFuncType = async (data, key: string) => {
-  const { renderImageByWebGL2 } = await import("@/utils/webgl");
+const encrypt: encryptFuncType = async (data, key) => {
+  const { mat2, vec2 } = await import("gl-matrix");
   const { padImageToSquare } = await import("@/utils/file");
   // 将图像填充为正方形
   const paddedData = padImageToSquare(data);
-  // 片段着色器
-  const fragmentShader = `#version 300 es
-    precision highp float;
-    uniform int u_iteration;
-    uniform float u_size;
-    uniform sampler2D u_texture;
-    in vec2 v_texcoord;
-    out vec4 outColor;
-    void main() {
-      const mat2 arnold = mat2(1.0, 1.0, 1.0, 2.0);
-      vec2 uv = v_texcoord * u_size;
-      for (int i = 0; i < u_iteration; i++) {
-        uv = mod(arnold * uv, u_size);
+  // 初始化原始和变换后的 Uint8ClampedArray
+  const originalData = new Uint8ClampedArray(paddedData.buffer);
+  const transformedData = new Uint8ClampedArray(originalData.length);
+  //定义Arnold变换矩阵
+  const arnoldMatrix = mat2.fromValues(1, 1, 1, 2);
+  const { width, height, name } = paddedData;
+  //循环处理像素
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const newPosition = vec2.create();
+      let newX = x;
+      let newY = y;
+      for (let k = 0; k < Number(key); k++) {
+        vec2.transformMat2(
+          newPosition,
+          vec2.fromValues(newX, newY),
+          arnoldMatrix
+        );
+        newX = (newPosition[0] + width) % width;
+        newY = (newPosition[1] + height) % height;
       }
-      outColor = texture(u_texture, uv / u_size);
-    }
-  `;
+      const newIndex = (newY * width + newX) * 4;
+      const oldIndex = (y * width + x) * 4;
 
-  // 处理函数
-  const process = (gl: WebGL2RenderingContext, program: WebGLProgram) => {
-    // 获取 u_iteration 变量位置
-    const iterationsLocation = gl.getUniformLocation(program, "u_iteration");
-    gl.uniform1i(iterationsLocation, Number(key));
-    // 获取 u_size 变量位置
-    const sizeLocation = gl.getUniformLocation(program, "u_size");
-    gl.uniform1f(sizeLocation, paddedData.width);
-  };
+      transformedData.set(
+        originalData.subarray(oldIndex, oldIndex + 4),
+        newIndex
+      );
+    }
+  }
 
   // 返回输出数据
-  return renderImageByWebGL2(paddedData, fragmentShader, process);
+  return {
+    buffer: transformedData.buffer,
+    width,
+    height,
+    name,
+  };
 };
 const decrypt = async (data: PixelBuffer, key: string) => {
-  const { renderImageByWebGL2 } = await import("@/utils/webgl");
   const { restoreImageFromSquare } = await import("@/utils/file");
-  // 片段着色器
-  const fragmentShader = `#version 300 es
-  precision highp float;
-  uniform int u_iterations;
-  uniform float u_size;
-  uniform sampler2D u_texture;
-  in vec2 v_texcoord;
-  out vec4 outColor;
-  void main() {
-    const mat2 arnold = mat2(2.0, -1.0, -1.0, 1.0);
-    vec2 uv = v_texcoord * u_size;
-    for (int i = 0; i < u_iterations; i++) {
-      uv = mod(arnold * uv, u_size);
+  const { mat2, vec2 } = await import("gl-matrix");
+  const { padImageToSquare } = await import("@/utils/file");
+  // 将图像填充为正方形
+  const paddedData = padImageToSquare(data);
+  // 初始化原始和变换后的 Uint8ClampedArray
+  const originalData = new Uint8ClampedArray(paddedData.buffer);
+  const transformedData = new Uint8ClampedArray(originalData.length);
+  //定义Arnold变换矩阵
+  const arnoldMatrix = mat2.fromValues(2, -1, -1, 1);
+  const { width, height, name } = paddedData;
+  //循环处理像素
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const newPosition = vec2.create();
+      let newX = x;
+      let newY = y;
+      for (let k = 0; k < Number(key); k++) {
+        vec2.transformMat2(
+          newPosition,
+          vec2.fromValues(newX, newY),
+          arnoldMatrix
+        );
+        newX = (newPosition[0] + width) % width;
+        newY = (newPosition[1] + height) % height;
+      }
+      const newIndex = (newY * width + newX) * 4;
+      const oldIndex = (y * width + x) * 4;
+
+      transformedData.set(
+        originalData.subarray(oldIndex, oldIndex + 4),
+        newIndex
+      );
     }
-    outColor = texture(u_texture, uv / u_size);
   }
-  `;
-
-  // 处理函数
-  const process = (gl: WebGL2RenderingContext, program: WebGLProgram) => {
-    // 获取 u_iterations 变量位置
-    const iterationsLocation = gl.getUniformLocation(program, "u_iterations");
-    gl.uniform1i(iterationsLocation, Number(key));
-    // 获取 u_size 变量位置
-    const sizeLocation = gl.getUniformLocation(program, "u_size");
-    gl.uniform1f(sizeLocation, data.width);
+  // 返回输出数据
+  return {
+    buffer: transformedData.buffer,
+    width,
+    height,
+    name,
   };
-
-  // 进行Arnold变换
-  const transformedData = renderImageByWebGL2(data, fragmentShader, process);
-
-  // 将结果还原为原来的长方形形式
-  const restoredData = restoreImageFromSquare(transformedData);
-
-  return transformedData;
 };
 
 export { encrypt, decrypt };
