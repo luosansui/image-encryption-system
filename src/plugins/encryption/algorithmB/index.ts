@@ -3,7 +3,7 @@ import { PixelBuffer } from "@/service/image/type";
 type encryptFuncType = (data: PixelBuffer, key: string) => Promise<PixelBuffer>;
 
 const encrypt: encryptFuncType = async (data, key: string) => {
-  const { processImageByWebGL } = await import("@/utils/webgl");
+  const { renderImageByWebGL2 } = await import("@/utils/webgl");
   const { padImageToSquare } = await import("@/utils/file");
   // 将图像填充为正方形
   const paddedData = padImageToSquare(data);
@@ -26,7 +26,7 @@ const encrypt: encryptFuncType = async (data, key: string) => {
   `;
 
   // 处理函数
-  const process = (gl: WebGLRenderingContext, program: WebGLProgram) => {
+  const process = (gl: WebGL2RenderingContext, program: WebGLProgram) => {
     // 获取 u_iteration 变量位置
     const iterationsLocation = gl.getUniformLocation(program, "u_iteration");
     gl.uniform1i(iterationsLocation, Number(key));
@@ -36,10 +36,10 @@ const encrypt: encryptFuncType = async (data, key: string) => {
   };
 
   // 返回输出数据
-  return processImageByWebGL(paddedData, fragmentShader, process);
+  return renderImageByWebGL2(paddedData, fragmentShader, process);
 };
 const decrypt = async (data: PixelBuffer, key: string) => {
-  const { processImageByWebGL } = await import("@/utils/webgl");
+  const { renderImageByWebGL2 } = await import("@/utils/webgl");
   const { restoreImageFromSquare } = await import("@/utils/file");
   // 片段着色器
   const fragmentShader = `#version 300 es
@@ -60,7 +60,7 @@ const decrypt = async (data: PixelBuffer, key: string) => {
   `;
 
   // 处理函数
-  const process = (gl: WebGLRenderingContext, program: WebGLProgram) => {
+  const process = (gl: WebGL2RenderingContext, program: WebGLProgram) => {
     // 获取 u_iterations 变量位置
     const iterationsLocation = gl.getUniformLocation(program, "u_iterations");
     gl.uniform1i(iterationsLocation, Number(key));
@@ -70,7 +70,7 @@ const decrypt = async (data: PixelBuffer, key: string) => {
   };
 
   // 进行Arnold变换
-  const transformedData = processImageByWebGL(data, fragmentShader, process);
+  const transformedData = renderImageByWebGL2(data, fragmentShader, process);
 
   // 将结果还原为原来的长方形形式
   const restoredData = restoreImageFromSquare(transformedData);

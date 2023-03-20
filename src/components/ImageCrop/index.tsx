@@ -322,7 +322,7 @@ const ModalContent: React.FC<ModalContentProps> = ({
               ref={imageRef}
               src={imageFile?.src}
               onLoad={handleImageLoad}
-              className="transition-all duration-75"
+              className="transition-all duration-75 pointer-events-none"
               style={{
                 transform: `scale(${scale}) rotate(${rotate}deg)`,
                 backgroundImage: `linear-gradient(45deg, black 25%, transparent 25%, transparent 75%, black 75%),
