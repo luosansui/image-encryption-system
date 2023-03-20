@@ -5,6 +5,11 @@ export type Plugin = {
   description: string;
   language: string;
   path: string;
+  keyRule: {
+    regex: string;
+    required: boolean;
+    message: string;
+  };
 };
 //插件的具体实现
 export type PluginModule = {
