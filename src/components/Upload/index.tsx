@@ -180,12 +180,12 @@ const Upload: React.FC<{
             <a
               href={file.src}
               download={file.file.name}
-              className="inline-block"
+              className="inline-block w-full"
             >
               <img
                 src={file.src}
                 onClick={(e) => handleOpenModal(e, file)}
-                className="w-full h-32 object-cover rounded border border-gray-200 cursor-pointer"
+                className="w-full h-32 object-scale-down rounded border cursor-pointe bg-gray-100"
               />
             </a>
 

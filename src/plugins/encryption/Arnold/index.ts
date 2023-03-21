@@ -54,6 +54,7 @@ const encrypt: encryptFuncType = async (data, key) => {
 };
 const decrypt = async (data: PixelBuffer, key: string) => {
   const { processImageByWebGL2 } = await import("@/utils/webgl");
+  const { restoreImageFromSquare } = await import("@/utils/file");
   // 片段着色器
   const fragmentShader = `#version 300 es
   precision highp float;
@@ -94,7 +95,9 @@ const decrypt = async (data: PixelBuffer, key: string) => {
   };
 
   // 进行Arnold变换
-  return processImageByWebGL2(data, fragmentShader, process);
+  const transformData = processImageByWebGL2(data, fragmentShader, process);
+  //裁剪图像
+  return restoreImageFromSquare(transformData);
 };
 
 export { encrypt, decrypt };
