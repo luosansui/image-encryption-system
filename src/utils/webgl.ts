@@ -162,13 +162,12 @@ export const createVertexBuffer = (
   return positionBuffer;
 };
 /**
- * 通过WebGL渲染图像
- * 普通渲染管线不适合进行通用计算，因此不推荐使用该函数对图像进行通用计算处理
+ * 通过WebGL对图像进行处理
  * @param data 输入图像数据
  * @param fragmentShaderSource 片元着色器源码
  * @param process 中间处理函数
  */
-export const renderImageByWebGL2 = (
+export const processImageByWebGL2 = (
   data: PixelBuffer,
   fragmentShaderSource: string,
   process?: (gl: WebGL2RenderingContext, program: WebGLProgram) => any

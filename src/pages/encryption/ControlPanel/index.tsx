@@ -243,6 +243,7 @@ export default function ControlPanel({
           renderSelected={(item) => item.label}
           renderList={(list) => list.label}
           className="flex-1"
+          listNumber={3}
         ></List>
       </Item>
       {/* 图像质量 */}
