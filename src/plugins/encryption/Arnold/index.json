@@ -1,7 +1,7 @@
 {
   "name": "Arnold变换",
   "version": "1.0.0",
-  "description": "Arnold变换置乱算法",
+  "description": "Arnold变换置乱算法, 加密时将对非正方形的图像进行填充, 解密时会对结果尝试进行裁剪",
   "language": "javascript",
   "keyRule": {
     "regex": "^0*(100|[1-9][0-9]?)$",
