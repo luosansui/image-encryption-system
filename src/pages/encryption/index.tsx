@@ -76,6 +76,25 @@ export default function Encryption() {
     handleFilePairRemove(revoke, md5);
   };
   /**
+   * 清空上传文件
+   */
+  const handleClearUpload = () => {
+    for (const file of fileList) {
+      URL.revokeObjectURL(file.src);
+    }
+    setFileList([]);
+    setFilePair([]);
+  };
+  /**
+   * 清空生成文件
+   */
+  const handleClearOutput = () => {
+    for (const pair of filePair) {
+      URL.revokeObjectURL(pair[1].src);
+    }
+    setFilePair([]);
+  };
+  /**
    * 初始化图片服务
    */
   const initImageService = async () => {
@@ -189,6 +208,8 @@ export default function Encryption() {
         <div className="relative h-full w-full overflow-y-auto overflow-x-hidden">
           <ControlPanel
             onStart={handleStart}
+            onClearUpload={handleClearUpload}
+            onClearOutput={handleClearOutput}
             pluginList={pluginList}
             className="absolute w-full select-none"
             disabled={isEncrypting}
