@@ -5,6 +5,8 @@ import pLimit from "p-limit";
 import { produce } from "immer";
 import { FileType } from "@/components/Upload/type";
 import ImageCrop from "../ImageCrop";
+import { ReactComponent as SVG_plus } from "@/assets/svg/plus.svg";
+import { ReactComponent as SVG_delete } from "@/assets/svg/delete.svg";
 
 const Upload: React.FC<{
   list?: FileType[];
@@ -154,20 +156,7 @@ const Upload: React.FC<{
                 {...getRootProps()}
               >
                 <input {...getInputProps()} />
-                <svg
-                  className="h-10 w-10 text-gray-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
+                <SVG_plus className="h-10 w-10 text-gray-600" />
               </div>
             </div>
           )}
@@ -193,22 +182,7 @@ const Upload: React.FC<{
               className="text-black absolute top-0 right-0"
               onClick={() => handleRemove(file.md5)}
             >
-              <svg
-                viewBox="0 0 1024 1024"
-                version="1.1"
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-              >
-                <path
-                  d="M512 512m-460.8 0a460.8 460.8 0 1 0 921.6 0 460.8 460.8 0 1 0-921.6 0Z"
-                  fill="#E73A30"
-                ></path>
-                <path
-                  d="M584.3968 512l108.6464 108.5952a51.2 51.2 0 0 1-72.448 72.448L512 584.3968l-108.5952 108.6464a51.2 51.2 0 1 1-72.448-72.448L439.6032 512 330.9568 403.4048A51.2 51.2 0 0 1 403.456 330.9568L512 439.6032l108.5952-108.6464a51.2 51.2 0 0 1 72.448 72.448L584.3968 512z"
-                  fill="#FFFFFF"
-                ></path>
-              </svg>
+              <SVG_delete />
             </button>
           </div>
         ))}
