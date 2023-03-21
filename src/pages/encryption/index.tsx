@@ -11,6 +11,7 @@ import { ControlOptionType } from "./ControlPanel/type";
 import ImageService from "@/service/image";
 import { Plugin } from "@/service/plugin/type";
 import { ReactComponent as SVG_download } from "@/assets/svg/download.svg";
+import { progressStatus } from "@/service/image/type";
 
 export default function Encryption() {
   //文件列表
@@ -25,9 +26,9 @@ export default function Encryption() {
   const [isEncrypting, setIsEncrypting] = useState(false);
   //是否正在导出
   const [isExporting, setIsExporting] = useState(false);
-  useEffect(() => {
-    console.log("filePair", filePair);
-  }, [filePair]);
+  //描述过程信息
+  const [processMessage, setProcessMessage] = useState("");
+
   /**
    * 新增上传文件
    */
@@ -46,6 +47,7 @@ export default function Encryption() {
     if (pairIndex == -1) {
       return;
     }
+    setProcessMessage("");
     //删除生成列表中的文件
     const pair = filePair[pairIndex];
     if (pair) {
@@ -84,6 +86,7 @@ export default function Encryption() {
     }
     setFileList([]);
     setFilePair([]);
+    setProcessMessage("");
   };
   /**
    * 清空生成文件
@@ -93,6 +96,7 @@ export default function Encryption() {
       URL.revokeObjectURL(pair[1].src);
     }
     setFilePair([]);
+    setProcessMessage("");
   };
   /**
    * 初始化图片服务
@@ -133,7 +137,15 @@ export default function Encryption() {
     try {
       //获取结果
       console.log("options", options);
-      const resList = imageService.current.processing(fileList, options);
+      //处理过程信息
+      const progress = (status: progressStatus) => {
+        setProcessMessage(status.message);
+      };
+      const resList = imageService.current.processing(
+        fileList,
+        options,
+        progress
+      );
       //处理加密结果
       for await (const item of resList) {
         setFilePair(
@@ -189,8 +201,8 @@ export default function Encryption() {
 
   // 进度条是否显示
   const isProgressShow = useMemo(
-    () => filePair.length / fileList.length > 0,
-    [fileList.length, filePair.length]
+    () => isEncrypting || filePair.length / fileList.length > 0,
+    [fileList.length, filePair.length, isEncrypting]
   );
   return (
     <div className="h-full grid grid-rows-2 grid-cols-[minmax(300px,auto)_minmax(300px,400px)] gap-3">
@@ -223,7 +235,10 @@ export default function Encryption() {
         <div
           className={`mt-3 flex items-center ${isProgressShow ? "" : "hidden"}`}
         >
-          <div className="p-2 border-2 border-gray-200 shadow-sm rounded-lg  flex-1">
+          <div className="p-2 border-2 border-gray-200 shadow-sm rounded-lg flex-1 relative">
+            <span className="absolute z-10 left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 select-none">
+              {processMessage}
+            </span>
             <ProgressBar
               current={filePair.length}
               total={fileList.length}
