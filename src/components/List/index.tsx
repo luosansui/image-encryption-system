@@ -8,6 +8,7 @@ interface SelectProps {
   renderList?: (option?: any) => JSX.Element;
   renderFooter?: (option?: any) => JSX.Element;
   disabled?: boolean;
+  listNumber?: number;
 }
 
 const Select: React.FC<SelectProps> = ({
@@ -19,12 +20,14 @@ const Select: React.FC<SelectProps> = ({
   renderList,
   renderFooter,
   disabled,
+  listNumber = 2,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   //最大列表高度
   const [maxListHeight, setMaxListHeight] = useState(0);
   const ulRef = useRef<HTMLUListElement | null>(null);
   const footerRef = useRef<HTMLDivElement | null>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
   /**
    * 选项点击事件
    * @param index 选中的option的index
@@ -66,16 +69,35 @@ const Select: React.FC<SelectProps> = ({
         window.getComputedStyle(ulRef.current).getPropertyValue("padding-top")
       );
       //获取两个li的高度
-      const doubleListHeight = (clientHeight / options.length) * 2;
+      const doubleListHeight = (clientHeight / options.length) * listNumber;
       //计算最大高度
       const maxDivHeight = doubleListHeight + PaddingTop + footerHeight;
       //设置最大高度
       setMaxListHeight(maxDivHeight);
     }
-  }, [options, isOpen]);
-
+  }, [options, isOpen, listNumber]);
+  //点击空白处关闭
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (isOpen) {
+        const target = e.target as HTMLElement;
+        if (target.closest(".list-content") === rootRef.current) {
+          return;
+        }
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener("click", handleClick);
+    } else {
+      document.removeEventListener("click", handleClick);
+    }
+    return () => {
+      document.removeEventListener("click", handleClick);
+    };
+  }, [isOpen]);
   return (
-    <div className={`relative ${className ?? ""}`}>
+    <div ref={rootRef} className={`list-content relative ${className ?? ""}`}>
       <button
         type="button"
         className="bg-gray-50 border border-gray-300 text-gray-600 text-sm font-semibold rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full px-2 py-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
