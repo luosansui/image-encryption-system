@@ -10,9 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "file-saver": "^2.0.5",
     "flowbite": "^1.6.3",
     "gl-matrix": "^3.4.3",
     "immer": "^9.0.19",
+    "jszip": "^3.10.1",
     "p-limit": "^4.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -23,6 +25,7 @@
     "spark-md5": "^3.0.2"
   },
   "devDependencies": {
+    "@types/file-saver": "^2.0.5",
     "@types/node": "^18.14.0",
     "@types/react": "^18.0.27",
     "@types/react-dom": "^18.0.10",
