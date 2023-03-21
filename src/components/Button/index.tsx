@@ -13,7 +13,7 @@ export default function Button(
     <button
       type="button"
       {...rest}
-      className={`whitespace-nowrap outline-none shadow font-medium rounded-lg text-sm px-5 py-2.5 mr-2 ${TYPES[typeColor]} ${className} ${disabledClass}`}
+      className={`whitespace-nowrap outline-none shadow font-medium rounded-lg text-sm px-5 py-2.5 ${TYPES[typeColor]} ${className} ${disabledClass}`}
     />
   );
 }

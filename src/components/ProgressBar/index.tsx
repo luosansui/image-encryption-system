@@ -35,7 +35,7 @@ const ProgressBar: React.FC<Props> = ({
         className="absolute h-full rounded-full transition-all bg-gradient-to-r from-blue-400 to-blue-500"
         style={{ width: `${percentage}%` }}
       />
-      <div className="absolute top-0 bottom-0 right-2 flex items-center text-gray-700 text-sm font-semibold">
+      <div className="absolute top-0 bottom-0 right-2 flex items-center text-gray-700 text-sm font-semibold select-none">
         {content}
       </div>
     </div>
