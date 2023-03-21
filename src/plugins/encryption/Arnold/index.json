@@ -1,7 +1,7 @@
 {
-  "name": "algorithmB",
+  "name": "Arnold变换",
   "version": "1.0.0",
-  "description": "algorithmB，用于图像加密，用于图像加密，用于图像加密用于图像加密",
+  "description": "Arnold变换置乱算法",
   "language": "javascript",
   "keyRule": {
     "regex": "^0*(100|[1-9][0-9]?)$",
