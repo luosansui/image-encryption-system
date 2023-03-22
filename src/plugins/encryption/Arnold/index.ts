@@ -3,7 +3,7 @@ import { PixelBuffer } from "@/service/image/type";
 type encryptFuncType = (data: PixelBuffer, key: string) => Promise<PixelBuffer>;
 
 const encrypt: encryptFuncType = async (data, key) => {
-  const { renderImageByWebGL2 } = await import("@/utils/webgl");
+  const { processImageByWebGL2 } = await import("@/utils/webgl");
   const { padImageToSquare } = await import("@/utils/file");
   // 将图像填充为正方形
   const paddedData = padImageToSquare(data);
@@ -50,10 +50,10 @@ const encrypt: encryptFuncType = async (data, key) => {
   };
 
   // 返回输出数据
-  return renderImageByWebGL2(paddedData, fragmentShader, process);
+  return processImageByWebGL2(paddedData, fragmentShader, process);
 };
 const decrypt = async (data: PixelBuffer, key: string) => {
-  const { renderImageByWebGL2 } = await import("@/utils/webgl");
+  const { processImageByWebGL2 } = await import("@/utils/webgl");
   const { restoreImageFromSquare } = await import("@/utils/file");
   // 片段着色器
   const fragmentShader = `#version 300 es
@@ -95,12 +95,9 @@ const decrypt = async (data: PixelBuffer, key: string) => {
   };
 
   // 进行Arnold变换
-  const transformedData = renderImageByWebGL2(data, fragmentShader, process);
-
-  // 将结果还原为原来的长方形形式
-  const restoredData = restoreImageFromSquare(transformedData);
-
-  return transformedData;
+  const transformData = processImageByWebGL2(data, fragmentShader, process);
+  //裁剪图像
+  return restoreImageFromSquare(transformData);
 };
 
 export { encrypt, decrypt };

@@ -5,6 +5,8 @@ import pLimit from "p-limit";
 import { produce } from "immer";
 import { FileType } from "@/components/Upload/type";
 import ImageCrop from "../ImageCrop";
+import { ReactComponent as SVG_plus } from "@/assets/svg/plus.svg";
+import { ReactComponent as SVG_delete } from "@/assets/svg/delete.svg";
 
 const Upload: React.FC<{
   list?: FileType[];
@@ -13,8 +15,6 @@ const Upload: React.FC<{
   className?: string;
 }> = ({ list, onAdd, onRemove, className }) => {
   const [files, setFiles] = useState<FileType[]>(list || []);
-  //保存当前文件的MD5集合，用于过滤重复文件
-  const fileHashSet = useRef(new Set<string>());
   //打开图片裁剪模态框
   const [isModalOpen, setIsModalOpen] = useState(false);
   //要编辑的图片
@@ -27,36 +27,54 @@ const Upload: React.FC<{
       setFiles(list);
     }
   }, [list]);
-
+  /**
+   *
+   * @param file 文件
+   * @returns Promise<FileType> 复合类型文件
+   */
+  const file2FileType = async (
+    file: File,
+    fileMd5?: string
+  ): Promise<FileType> => {
+    const md5 = fileMd5 || (await calculateMD5(file));
+    const src = URL.createObjectURL(file);
+    return { file, src, md5 };
+  };
   /**
    * 过滤重复文件
-   * @param files 文件列表
-   * @param acceptedMD5s 已经计算的md5列表
+   * @param fileList 文件列表
+   * @param acceptedMD5s 已经计算的md5列表，用于优化性能
    * @returns 不重复的文件列表
    */
   const filterDuplicateFiles = (
     fileList: File[],
     acceptedMD5s: string[]
   ): Promise<FileType | null>[] => {
+    //限制并发数为3
     const limit = pLimit(3);
-    return fileList.map(async (file, index) => {
-      try {
-        const md5 =
-          acceptedMD5s[index] ?? (await limit(() => calculateMD5(file)));
-        if (!fileHashSet.current.has(md5)) {
-          fileHashSet.current.add(md5);
-          const src = URL.createObjectURL(file);
-          return { file, md5, src };
-        }
-      } catch (error) {
-        console.error(error);
+    //记录当前文件的md5
+    const fileHashSet = new Set<string>(files.map((file) => file.md5));
+    //过滤重复文件
+    const noDuplicateList = fileList.map(async (file, index) => {
+      const newFile = await limit(() =>
+        file2FileType(file, acceptedMD5s[index])
+      );
+      if (!fileHashSet.has(newFile.md5)) {
+        fileHashSet.add(newFile.md5);
+        return newFile;
       }
       return null;
     });
+    return noDuplicateList;
   };
 
-  const handleDrop = (acceptedFiles: File[]) => {
-    handleAdd(acceptedFiles);
+  const handleDrop = async (acceptedFiles: File[]) => {
+    if (isUploading) {
+      return;
+    }
+    setIsUploading(true);
+    await handleAdd(acceptedFiles);
+    setIsUploading(false);
   };
 
   const handleAdd = async (
@@ -64,12 +82,12 @@ const Upload: React.FC<{
     acceptedMD5s: string[] = [],
     insertIndex = files.length
   ) => {
-    setIsUploading(true);
     //过滤重复文件
-    const newFiles = filterDuplicateFiles(acceptedFiles, acceptedMD5s);
+    const promiseFiles = filterDuplicateFiles(acceptedFiles, acceptedMD5s);
     //等待文件计算MD5完成
-    for (let i = 0; i < newFiles.length; i += 3) {
-      const result = await Promise.all(newFiles.slice(i, i + 3));
+    for (let i = 0; i < promiseFiles.length; i += 3) {
+      //每次处理3个
+      const result = await Promise.all(promiseFiles.slice(i, i + 3));
       //过滤掉重复文件
       const resultWithoutNull = result.filter(
         (item): item is FileType => item !== null
@@ -89,12 +107,9 @@ const Upload: React.FC<{
         }
       }
     }
-    setIsUploading(false);
   };
 
   const handleRemove = (md5: string) => {
-    //从fileHashSet中移除
-    fileHashSet.current.delete(md5);
     //当外部没有传入的list时，该组件为非受控组件，直接更新状态
     if (list === undefined) {
       const fileIndex = files.findIndex((file) => file.md5 === md5);
@@ -154,20 +169,7 @@ const Upload: React.FC<{
                 {...getRootProps()}
               >
                 <input {...getInputProps()} />
-                <svg
-                  className="h-10 w-10 text-gray-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
+                <SVG_plus className="h-10 w-10 text-gray-600" />
               </div>
             </div>
           )}
@@ -180,12 +182,12 @@ const Upload: React.FC<{
             <a
               href={file.src}
               download={file.file.name}
-              className="inline-block"
+              className="inline-block w-full"
             >
               <img
                 src={file.src}
                 onClick={(e) => handleOpenModal(e, file)}
-                className="w-full h-32 object-cover rounded border border-gray-200 cursor-pointer"
+                className="w-full h-32 object-scale-down rounded border cursor-pointe bg-gray-100"
               />
             </a>
 
@@ -193,22 +195,7 @@ const Upload: React.FC<{
               className="text-black absolute top-0 right-0"
               onClick={() => handleRemove(file.md5)}
             >
-              <svg
-                viewBox="0 0 1024 1024"
-                version="1.1"
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-              >
-                <path
-                  d="M512 512m-460.8 0a460.8 460.8 0 1 0 921.6 0 460.8 460.8 0 1 0-921.6 0Z"
-                  fill="#E73A30"
-                ></path>
-                <path
-                  d="M584.3968 512l108.6464 108.5952a51.2 51.2 0 0 1-72.448 72.448L512 584.3968l-108.5952 108.6464a51.2 51.2 0 1 1-72.448-72.448L439.6032 512 330.9568 403.4048A51.2 51.2 0 0 1 403.456 330.9568L512 439.6032l108.5952-108.6464a51.2 51.2 0 0 1 72.448 72.448L584.3968 512z"
-                  fill="#FFFFFF"
-                ></path>
-              </svg>
+              <SVG_delete />
             </button>
           </div>
         ))}

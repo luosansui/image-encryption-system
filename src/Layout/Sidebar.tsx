@@ -1,6 +1,8 @@
 import React, { Fragment, useState } from "react";
 import { NavLink } from "react-router-dom";
 import routes, { CustomRouteObject } from "@/routes";
+import { ReactComponent as SVG_down } from "@/assets/svg/down.svg";
+import { ReactComponent as SVG_menu } from "@/assets/svg/menu.svg";
 
 const MenuNavLink: React.FC<{ route: CustomRouteObject; zIndex?: number }> = ({
   route,
@@ -32,20 +34,11 @@ const MenuNavLink: React.FC<{ route: CustomRouteObject; zIndex?: number }> = ({
           {route.name}
         </span>
         {hasChildren && (
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
+          <SVG_down
             className={`h-5 w-5 transition-transform ${
               expanded ? "rotate-180" : "rotate-0"
             }`}
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fillRule="evenodd"
-              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-              clipRule="evenodd"
-            />
-          </svg>
+          />
         )}
       </NavLink>
       {hasChildren && (
@@ -73,19 +66,7 @@ const Sidebar: React.FC = () => {
         data-drawer-show="drawer-navigation"
         aria-controls="drawer-navigation"
       >
-        <svg
-          className="w-6 h-6"
-          aria-hidden="true"
-          fill="currentColor"
-          viewBox="0 0 20 20"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            clipRule="evenodd"
-            fillRule="evenodd"
-            d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"
-          ></path>
-        </svg>
+        <SVG_menu aria-hidden="true" className="w-6 h-6" />
       </button>
 
       <div
@@ -103,19 +84,7 @@ const Sidebar: React.FC = () => {
             aria-controls="drawer-navigation"
             className="text-gray-500 bg-transparent hover:bg-gray-200  rounded-lg text-sm p-1.5 dark:hover:bg-gray-600 dark:hover:text-white"
           >
-            <svg
-              className="w-6 h-6"
-              aria-hidden="true"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                clipRule="evenodd"
-                fillRule="evenodd"
-                d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"
-              ></path>
-            </svg>
+            <SVG_menu aria-hidden="true" className="w-6 h-6" />
             <span className="sr-only">Close menu</span>
           </button>
         </div>
