@@ -15,6 +15,8 @@ const Upload: React.FC<{
   className?: string;
 }> = ({ list, onAdd, onRemove, className }) => {
   const [files, setFiles] = useState<FileType[]>(list || []);
+  //保存当前文件的MD5集合，用于过滤重复文件
+  const fileHashSet = useRef(new Set<string>());
   //打开图片裁剪模态框
   const [isModalOpen, setIsModalOpen] = useState(false);
   //要编辑的图片
@@ -110,6 +112,8 @@ const Upload: React.FC<{
   };
 
   const handleRemove = (md5: string) => {
+    //从fileHashSet中移除
+    fileHashSet.current.delete(md5);
     //当外部没有传入的list时，该组件为非受控组件，直接更新状态
     if (list === undefined) {
       const fileIndex = files.findIndex((file) => file.md5 === md5);

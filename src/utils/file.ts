@@ -114,6 +114,7 @@ export async function pixelsBuffer2File(
     "2d"
   ) as OffscreenCanvasRenderingContext2D;
   ctx.putImageData(imageData, 0, 0);
+  
   //type对于所有格式并非全部有效，依据浏览器支持情况而定
   const blob = await (offscreenCanvas as any).convertToBlob({
     type,

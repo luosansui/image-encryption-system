@@ -277,7 +277,6 @@ export default function ControlPanel({
           {qualityLabel}
         </span>
       </Item>
-
       <div className="text-center pt-2">
         <Button
           disabled={disabled}

@@ -1,0 +1,11 @@
+{
+  "name": "algorithmB",
+  "version": "1.0.0",
+  "description": "algorithmB，用于图像加密，用于图像加密，用于图像加密用于图像加密",
+  "language": "javascript",
+  "keyRule": {
+    "regex": "^0*(100|[1-9][0-9]?)$",
+    "required": true,
+    "message": "请输入数字范围为1-100"
+  }
+}
