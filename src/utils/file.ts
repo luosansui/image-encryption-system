@@ -69,11 +69,25 @@ export function calculateMD5(
  * @param file 任意格式的图像文件
  * @returns 图像文件的ArrayBuffer像素数据
  */
-export async function file2PixelsBuffer(file: File): Promise<PixelBuffer> {
+export async function file2PixelsBuffer(
+  file: File,
+  quality = 1
+): Promise<PixelBuffer> {
   const img = await createImageBitmap(file);
   const canvas = new OffscreenCanvas(img.width, img.height);
   const ctx = canvas.getContext("2d") as OffscreenCanvasRenderingContext2D;
   ctx.drawImage(img, 0, 0);
+  //压缩图片
+  if (quality < 1) {
+    const blob = await (canvas as any).convertToBlob({
+      type: "image/jpeg",
+      quality,
+    });
+    const lossyImage = await createImageBitmap(blob);
+    //清空画布
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(lossyImage, 0, 0);
+  }
   const pixelData = ctx.getImageData(0, 0, img.width, img.height).data.buffer;
   return {
     name: file.name,
@@ -100,7 +114,8 @@ export async function pixelsBuffer2File(
     "2d"
   ) as OffscreenCanvasRenderingContext2D;
   ctx.putImageData(imageData, 0, 0);
-  //TODO: 这里type无效
+  
+  //type对于所有格式并非全部有效，依据浏览器支持情况而定
   const blob = await (offscreenCanvas as any).convertToBlob({
     type,
     quality,
@@ -153,8 +168,8 @@ export const padImageToSquare = (data: PixelBuffer): PixelBuffer => {
     return data;
   } else if (width > height) {
     // 宽度大于高度，向下填充
-    const paddedBuffer = new Uint8Array(maxDim ** 2 * 4);
-    paddedBuffer.set(new Uint8Array(buffer));
+    const paddedBuffer = new Uint8ClampedArray(maxDim ** 2 * 4);
+    paddedBuffer.set(new Uint8ClampedArray(buffer));
     return {
       name,
       width: maxDim,
@@ -163,12 +178,12 @@ export const padImageToSquare = (data: PixelBuffer): PixelBuffer => {
     };
   } else {
     // 高度大于宽度，向右填充
-    const paddedBuffer = new Uint8Array(maxDim ** 2 * 4);
+    const paddedBuffer = new Uint8ClampedArray(maxDim ** 2 * 4);
     const rowSize = width * 4;
     for (let i = 0; i < height; i++) {
       const offset = i * rowSize;
       paddedBuffer.set(
-        new Uint8Array(buffer, offset, rowSize),
+        new Uint8ClampedArray(buffer, offset, rowSize),
         offset + i * (maxDim - width) * 4
       );
     }
@@ -181,39 +196,99 @@ export const padImageToSquare = (data: PixelBuffer): PixelBuffer => {
   }
 };
 /**
-
-将正方形图像还原为长方形，去除尾部填充的部分。
-@param data 要还原的像素数据
-@returns 还原后的像素数据
-*/
+ * 将正方形图像还原为长方形，去除尾部填充的部分。
+ * @param data 要还原的像素数据
+ * @returns 还原后的像素数据
+ */
 export const restoreImageFromSquare = (data: PixelBuffer): PixelBuffer => {
   const { width, height, buffer, name } = data;
-  if (width === height) {
-    // 已经是正方形，无需还原
+  if (width !== height) {
+    // 不是正方形，无需还原
     return data;
-  } else if (width > height) {
-    // 宽度大于高度，从下面截取
-    const croppedBuffer = buffer.slice(0, height * width * 4);
-    return {
-      name,
-      width: width,
-      height: height,
-      buffer: croppedBuffer,
-    };
-  } else {
-    // 高度大于宽度，从右边截取
+  }
+
+  //从最后一行倒序遍历，若该行55%为零，则认为该行为填充行
+  let paddingBottom = 0;
+  let paddingRight = 0;
+  for (let i = height - 1; i >= 0; i--) {
     const rowSize = width * 4;
-    const croppedBuffer = new ArrayBuffer(height * rowSize);
-    const croppedRows = new Uint8Array(croppedBuffer);
-    for (let i = 0; i < height; i++) {
-      const offset = i * rowSize;
-      croppedRows.set(new Uint8Array(buffer, offset, rowSize), offset);
+    const offset = i * rowSize;
+    const row = new Uint8ClampedArray(buffer, offset, rowSize);
+    let blockLength = 0;
+    let alphaLength = 0;
+    row.forEach((pixels, index) => {
+      if (pixels < 30) {
+        if (index % 3 !== 0) {
+          blockLength++;
+        } else {
+          alphaLength++;
+        }
+      }
+    });
+    if (
+      (alphaLength * 4) / row.length > 0.55 ||
+      (blockLength * 4) / (row.length * 3) > 0.55
+    ) {
+      paddingBottom++;
+    } else {
+      break;
     }
+  }
+  if (paddingBottom > 0) {
+    //去除填充行
+    const newheight = height - paddingBottom;
+    const restoredBuffer = new Uint8ClampedArray(newheight * width * 4);
+    restoredBuffer.set(new Uint8ClampedArray(buffer, 0, newheight * width * 4));
     return {
       name,
-      width: width,
-      height: height,
-      buffer: croppedBuffer,
+      width,
+      height: newheight,
+      buffer: restoredBuffer.buffer,
     };
   }
+  //从右侧开始，若该列55%为零，则认为该列为填充列
+  for (let i = width - 1; i >= 0; i--) {
+    const column = new Uint8ClampedArray(height * 4);
+    for (let j = 0; j < height; j++) {
+      column.set(
+        new Uint8ClampedArray(buffer, j * width * 4 + i * 4, 4),
+        j * 4
+      );
+    }
+    let blockLength = 0;
+    let alphaLength = 0;
+    column.forEach((pixels, index) => {
+      if (pixels < 30) {
+        if (index % 3 !== 0) {
+          blockLength++;
+        } else {
+          alphaLength++;
+        }
+      }
+    });
+    if (
+      (alphaLength * 4) / column.length > 0.55 ||
+      (blockLength * 4) / (column.length * 3) > 0.55
+    ) {
+      paddingRight++;
+    } else {
+      break;
+    }
+  }
+  //去除填充列
+  const restoredBuffer = new Uint8ClampedArray(
+    height * (width - paddingRight) * 4
+  );
+  for (let i = 0; i < height; i++) {
+    restoredBuffer.set(
+      new Uint8ClampedArray(buffer, i * width * 4, (width - paddingRight) * 4),
+      i * (width - paddingRight) * 4
+    );
+  }
+  return {
+    name,
+    width: width - paddingRight,
+    height,
+    buffer: restoredBuffer.buffer,
+  };
 };

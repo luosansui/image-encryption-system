@@ -13,7 +13,7 @@ const Item = (props: {
   message?: string;
 }) => {
   return (
-    <div className="flex items-center mb-5 relative">
+    <div className="flex items-center mb-4 relative">
       <div
         className="w-[64px] mr-3 whitespace-nowrap text-justify relative"
         style={{ textAlignLast: "justify" }}
@@ -35,11 +35,15 @@ export default function ControlPanel({
   className, //类名
   pluginList, //插件列表
   disabled, //是否正在加密
+  onClearUpload, //清除上传文件
+  onClearOutput, //清除输出文件
 }: {
   onStart?: (option: ControlOptionType) => void;
   className?: string;
   pluginList: Plugin[];
   disabled?: boolean;
+  onClearUpload?: () => void;
+  onClearOutput?: () => void;
 }) {
   //插件索引
   const [pluginIndex, setPluginIndex] = useState<number>(0);
@@ -138,6 +142,18 @@ export default function ControlPanel({
     const plugin = pluginList[pluginIndex];
     validateKey(value, plugin?.keyRule);
   };
+  /**
+   * 清空上传文件
+   */
+  const handleClearUpload = () => {
+    onClearUpload?.();
+  };
+  /**
+   * 清空输出文件
+   */
+  const handleClearOutput = () => {
+    onClearOutput?.();
+  };
 
   /**
    * 渲染插件已选择的内容
@@ -209,7 +225,7 @@ export default function ControlPanel({
         renderSelected={renderPluginSelected}
         renderList={renderPluginList}
         renderFooter={renderPluginListFooter}
-        className="mb-5"
+        className="mb-4"
       ></List>
 
       {/* 选择操作 */}
@@ -217,7 +233,7 @@ export default function ControlPanel({
         options={OPTION_CARDS}
         disabled={disabled}
         onChange={handleOptionChange}
-        className="mb-5"
+        className="mb-4"
       />
 
       {/* 秘钥 */}
@@ -243,6 +259,7 @@ export default function ControlPanel({
           renderSelected={(item) => item.label}
           renderList={(list) => list.label}
           className="flex-1"
+          listNumber={3}
         ></List>
       </Item>
       {/* 图像质量 */}
@@ -260,10 +277,25 @@ export default function ControlPanel({
           {qualityLabel}
         </span>
       </Item>
-
-      <div className="text-center mt-3">
-        <Button onClick={handleStart} disabled={disabled} className="w-1/4">
-          开始
+      <div className="text-center pt-2">
+        <Button
+          disabled={disabled}
+          onClick={handleClearUpload}
+          typeColor="white"
+          className="mb-2 mr-2"
+        >
+          清空上传
+        </Button>
+        <Button
+          disabled={disabled}
+          onClick={handleClearOutput}
+          typeColor="white"
+          className="mb-2 mr-2"
+        >
+          清空输出
+        </Button>
+        <Button onClick={handleStart} disabled={disabled} className="mb-2">
+          开始{optionName === "encrypt" ? "加密" : "解密"}
         </Button>
       </div>
     </div>
