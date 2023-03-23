@@ -1,8 +1,9 @@
-import { calculateMD5 } from "@/utils/file";
+import { calculateMD5, file2FileType, getThumbnail } from "@/utils/file";
 import React, { Fragment, useEffect, useRef, useState } from "react";
 import Dropzone from "react-dropzone";
 import pLimit from "p-limit";
 import { produce } from "immer";
+import Pica from "pica";
 import { FileType } from "@/components/Upload/type";
 import ImageCrop from "../ImageCrop";
 import { ReactComponent as SVG_plus } from "@/assets/svg/plus.svg";
@@ -11,7 +12,7 @@ import { ReactComponent as SVG_delete } from "@/assets/svg/delete.svg";
 const Upload: React.FC<{
   list?: FileType[];
   onAdd?: (files: FileType[], insertIndex: number) => void;
-  onRemove?: (revoke: (url: string) => void, md5: string) => void; //第一个参数revoke是为了显式的告诉外部需要释放url资源
+  onRemove?: (md5: string) => void;
   className?: string;
 }> = ({ list, onAdd, onRemove, className }) => {
   const [files, setFiles] = useState<FileType[]>(list || []);
@@ -27,19 +28,7 @@ const Upload: React.FC<{
       setFiles(list);
     }
   }, [list]);
-  /**
-   *
-   * @param file 文件
-   * @returns Promise<FileType> 复合类型文件
-   */
-  const file2FileType = async (
-    file: File,
-    fileMd5?: string
-  ): Promise<FileType> => {
-    const md5 = fileMd5 || (await calculateMD5(file));
-    const src = URL.createObjectURL(file);
-    return { file, src, md5 };
-  };
+
   /**
    * 过滤重复文件
    * @param fileList 文件列表
@@ -116,6 +105,7 @@ const Upload: React.FC<{
       if (fileIndex !== -1) {
         const file = files[fileIndex];
         URL.revokeObjectURL(file.src);
+        URL.revokeObjectURL(file.thumbnail.src);
         console.log("[[非受控组件]]: Remove File");
         setFiles(
           produce((draft) => {
@@ -125,7 +115,7 @@ const Upload: React.FC<{
       }
     }
     //通知外部变更
-    onRemove?.(URL.revokeObjectURL, md5);
+    onRemove?.(md5);
   };
   /**
    * 图片裁剪模态框关闭回调
@@ -180,12 +170,12 @@ const Upload: React.FC<{
             className="p-2 box-border relative w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-[12.5%]"
           >
             <a
-              href={file.src}
-              download={file.file.name}
+              href={file.thumbnail.src}
+              download={`thumbnail-${file.thumbnail.file.name}`}
               className="inline-block w-full"
             >
               <img
-                src={file.src}
+                src={file.thumbnail.src}
                 onClick={(e) => handleOpenModal(e, file)}
                 className="w-full h-32 object-scale-down rounded border cursor-pointe bg-gray-100"
               />

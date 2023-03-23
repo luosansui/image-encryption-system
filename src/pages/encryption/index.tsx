@@ -42,7 +42,7 @@ export default function Encryption() {
   /**
    * 删除生成文件
    */
-  const handleFilePairRemove = (revoke: (url: string) => void, md5: string) => {
+  const handleFilePairRemove = (md5: string) => {
     const pairIndex = filePair.findIndex((pair) => pair[0].md5 === md5);
     if (pairIndex == -1) {
       return;
@@ -51,7 +51,8 @@ export default function Encryption() {
     //删除生成列表中的文件
     const pair = filePair[pairIndex];
     if (pair) {
-      revoke(pair[1].src);
+      URL.revokeObjectURL(pair[1].src);
+      URL.revokeObjectURL(pair[1].thumbnail.src);
       setFilePair(
         produce((draft) => {
           draft.splice(pairIndex, 1);
@@ -62,20 +63,21 @@ export default function Encryption() {
   /**
    * 删除上传文件
    */
-  const handleFileListRemove = (revoke: (url: string) => void, md5: string) => {
+  const handleFileListRemove = (md5: string) => {
     const fileIndex = fileList.findIndex((file) => file.md5 === md5);
     if (fileIndex == -1) {
       return;
     }
     //删除上传列表中的文件
     const file = fileList[fileIndex];
-    revoke(file.src);
+    URL.revokeObjectURL(file.src);
+    URL.revokeObjectURL(file.thumbnail.src);
     setFileList(
       produce((draft) => {
         draft.splice(fileIndex, 1);
       })
     );
-    handleFilePairRemove(revoke, md5);
+    handleFilePairRemove(md5);
   };
   /**
    * 清空上传文件
@@ -83,6 +85,7 @@ export default function Encryption() {
   const handleClearUpload = () => {
     for (const file of fileList) {
       URL.revokeObjectURL(file.src);
+      URL.revokeObjectURL(file.thumbnail.src);
     }
     setFileList([]);
     setFilePair([]);
@@ -94,6 +97,7 @@ export default function Encryption() {
   const handleClearOutput = () => {
     for (const pair of filePair) {
       URL.revokeObjectURL(pair[1].src);
+      URL.revokeObjectURL(pair[1].thumbnail.src);
     }
     setFilePair([]);
     setProcessMessage("");
@@ -173,11 +177,13 @@ export default function Encryption() {
     try {
       //如果只有一张图片就不打包了
       if (filePair.length === 1) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const [_, { file }] = filePair[0];
         saveAs(file, file.name);
       } else {
         const zip = new JSZip();
         //添加文件
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         for (const [_, { file }] of filePair) {
           zip.file(file.name, file);
         }
