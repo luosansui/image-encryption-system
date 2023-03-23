@@ -325,8 +325,11 @@ export const getThumbnail = async (
       imageData.height * scale
     );
     //生成缩略图
-    const result = await pica.resize(imageData, destCanvas as any);
-    const resizedBlob = await pica.toBlob(result, "image/png");
+    await pica.resize(imageData, destCanvas as any);
+    //const resizedBlob = await pica.toBlob(result, "image/png"); //火狐浏览器会阻止OffscreenCanvas的toBlob方法
+    const resizedBlob = await (destCanvas as any).convertToBlob({
+      type: "image/png",
+    });
     //返回缩略图文件
     return new File([resizedBlob], file.name, {
       type: resizedBlob.type,

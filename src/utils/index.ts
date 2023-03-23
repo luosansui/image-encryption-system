@@ -12,3 +12,13 @@ export const getThreadsNumber = (num: number) => {
   }
   return 1;
 };
+/**
+ * 判断是否是基于Chromium内核的浏览器
+ * @returns boolean
+ */
+export const isChromiumBased = (): boolean => {
+  return (
+    /(Chrome|Chromium|Edg)/i.test(window.navigator.userAgent) ||
+    (window as any).chrome
+  );
+};
