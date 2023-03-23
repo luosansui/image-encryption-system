@@ -3,6 +3,7 @@ import { ControlOptionType } from "@/pages/encryption/ControlPanel/type";
 import PluginService from "@/service/plugin";
 import { Plugin } from "@/service/plugin/type";
 import { getThreadsNumber } from "@/utils";
+import { file2FileType } from "@/utils/file";
 import WorkService from "../worker";
 import { encryptFuncType, PluginJson, progressStatus } from "./type";
 import WorkerThread from "./worker?worker";
@@ -124,16 +125,13 @@ class ImageService {
       //获取文件类型
       const MIME = format || origin.file.type;
       //执行操作
-      const fileWithOutSrc = await workService.run<FileType>(
+      const outputData = await workService.run<{ file: File; md5: string }>(
         origin,
         key,
         MIME,
         quality
       );
-      const newFile = {
-        ...fileWithOutSrc,
-        src: URL.createObjectURL(fileWithOutSrc.file),
-      };
+      const newFile = await file2FileType(outputData.file, outputData.md5);
       return [origin, newFile];
     });
     //监听result用于通知进度

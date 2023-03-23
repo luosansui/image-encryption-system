@@ -1,6 +1,8 @@
 import { PixelBuffer } from "@/service/image/type";
 import SparkMD5 from "spark-md5";
 import { getNewFileName } from "./string";
+import Pica from "pica";
+import { FileType } from "@/components/Upload/type";
 
 /**
  * 计算文件的 MD5 值
@@ -289,5 +291,74 @@ export const restoreImageFromSquare = (data: PixelBuffer): PixelBuffer => {
     width: width - paddingRight,
     height,
     buffer: restoredBuffer.buffer,
+  };
+};
+/**
+ * 获取图像缩略图
+ * @param file 图像文件
+ * @param targetWidth 目标宽度
+ * @param targetHeight 目标高度
+ * @returns 缩略图文件
+ */
+export const getThumbnail = async (
+  file: File,
+  targetWidth: number,
+  targetHeight: number
+): Promise<File> => {
+  try {
+    const pica = new Pica();
+    const imageData = await file2Image(file);
+    const destCanvas = document.createElement("canvas");
+    //计算缩放比例
+    const scale = Math.min(
+      targetWidth / imageData.width,
+      targetHeight / imageData.height
+    );
+    //设置缩略图大小
+    destCanvas.width = imageData.width * scale;
+    destCanvas.height = imageData.height * scale;
+    //生成缩略图
+    const result = await pica.resize(imageData, destCanvas);
+    const resizedBlob = await pica.toBlob(result, "image/jpeg");
+    //返回缩略图文件
+    return new File([resizedBlob], file.name, {
+      type: "image/jpeg",
+    });
+  } catch (error) {
+    console.error("生成缩略图失败: ", error);
+    return file;
+  }
+};
+/**
+ *
+ * @param file 文件
+ * @param fileMd5 文件md5
+ * @param thumbnailMd5 缩略图md5
+ * @param thumbnailWidth 缩略图宽度
+ * @param thumbnailHeight 缩略图高度
+ * @returns Promise<FileType> 复合类型文件
+ */
+export const file2FileType = async (
+  file: File,
+  fileMd5?: string,
+  thumbnailWidth = 128,
+  thumbnailHeight = 128
+): Promise<FileType> => {
+  //计算文件的md5
+  const md5 = fileMd5 || (await calculateMD5(file));
+  const src = URL.createObjectURL(file);
+  //计算缩略图md5
+  const thumFile = await getThumbnail(file, thumbnailWidth, thumbnailHeight);
+  const thumSrc = URL.createObjectURL(thumFile);
+  //构建缩略图对象
+  const thumbnail = {
+    file: thumFile,
+    src: thumSrc,
+  };
+  return {
+    file,
+    src,
+    md5,
+    thumbnail,
   };
 };

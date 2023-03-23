@@ -23,9 +23,13 @@ const ImageWrapper = ({
     onClick?.();
   };
   return (
-    <a href={file.src} download={file.file.name} className="inline-block">
+    <a
+      href={file.thumbnail.src}
+      download={`thumbnail-${file.thumbnail.file.name}`}
+      className="inline-block"
+    >
       <img
-        src={file.src}
+        src={file.thumbnail.src}
         onClick={handleClick}
         className="w-32 h-32 object-scale-down inline-block cursor-pointer bg-gray-100"
       />
@@ -40,7 +44,7 @@ export default function Output({
 }: {
   pairList: [FileType, FileType][];
   className?: string;
-  onRemove?: (revoke: (url: string) => void, md5: string) => void; //第一个参数revoke是为了显式的告诉外部需要释放url资源
+  onRemove?: (md5: string) => void;
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editImage, setEditImage] = useState<{
@@ -68,7 +72,7 @@ export default function Output({
    * 删除图像
    */
   const handleRemove = (md5: string) => {
-    onRemove?.(URL.revokeObjectURL, md5);
+    onRemove?.(md5);
   };
   /**
    * 生成表格数据
