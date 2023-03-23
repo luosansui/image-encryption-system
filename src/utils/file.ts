@@ -3,6 +3,7 @@ import SparkMD5 from "spark-md5";
 import { getNewFileName } from "./string";
 import Pica from "pica";
 import { FileType } from "@/components/Upload/type";
+import produce from "immer";
 
 /**
  * 计算文件的 MD5 值
@@ -123,7 +124,7 @@ export async function pixelsBuffer2File(
   });
   //处理文件名
   const newName = getNewFileName(name, blob.type);
-  return new File([blob], `new-${newName}`, { type: blob.type });
+  return new File([blob], `encrypted-${newName}`, { type: blob.type });
 }
 /**
  *
@@ -132,19 +133,16 @@ export async function pixelsBuffer2File(
  */
 export const file2Image = (file: File): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = (event) => {
-      const image = new Image();
-      image.src = event.target?.result as string;
-      image.onload = () => {
-        resolve(image);
-      };
-      image.onerror = reject;
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(img.src);
+      resolve(img);
     };
-
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
+    img.onerror = () => {
+      URL.revokeObjectURL(img.src);
+      reject(new Error("Failed to load image"));
+    };
   });
 };
 /**
@@ -298,31 +296,40 @@ export const restoreImageFromSquare = (data: PixelBuffer): PixelBuffer => {
  * @param file 图像文件
  * @param targetWidth 目标宽度
  * @param targetHeight 目标高度
+ * @param isWorker 是否在web worker中运行
  * @returns 缩略图文件
  */
 export const getThumbnail = async (
   file: File,
   targetWidth: number,
-  targetHeight: number
+  targetHeight: number,
+  isWorker?: boolean
 ): Promise<File> => {
   try {
-    const pica = new Pica();
-    const imageData = await file2Image(file);
-    const destCanvas = document.createElement("canvas");
+    const pica = new Pica({
+      createCanvas: (width, height) =>
+        new OffscreenCanvas(width, height) as any,
+    });
+    //将文件转换为图像数据, web worker不能访问Image, 但是file2Image效率更快一点
+    const imageData = isWorker
+      ? await createImageBitmap(file)
+      : await file2Image(file);
     //计算缩放比例
     const scale = Math.min(
       targetWidth / imageData.width,
       targetHeight / imageData.height
     );
     //设置缩略图大小
-    destCanvas.width = imageData.width * scale;
-    destCanvas.height = imageData.height * scale;
+    const destCanvas = new OffscreenCanvas(
+      imageData.width * scale,
+      imageData.height * scale
+    );
     //生成缩略图
-    const result = await pica.resize(imageData, destCanvas);
-    const resizedBlob = await pica.toBlob(result, "image/jpeg");
+    const result = await pica.resize(imageData, destCanvas as any);
+    const resizedBlob = await pica.toBlob(result, "image/png");
     //返回缩略图文件
     return new File([resizedBlob], file.name, {
-      type: "image/jpeg",
+      type: resizedBlob.type,
     });
   } catch (error) {
     console.error("生成缩略图失败: ", error);
@@ -333,23 +340,31 @@ export const getThumbnail = async (
  *
  * @param file 文件
  * @param fileMd5 文件md5
- * @param thumbnailMd5 缩略图md5
+ * @param isCreateURL 是否创建url
  * @param thumbnailWidth 缩略图宽度
  * @param thumbnailHeight 缩略图高度
  * @returns Promise<FileType> 复合类型文件
  */
 export const file2FileType = async (
   file: File,
-  fileMd5?: string,
+  fileMd5?: string | null | false,
+  isCreateURL = true,
+  isWorker = false,
   thumbnailWidth = 128,
   thumbnailHeight = 128
 ): Promise<FileType> => {
-  //计算文件的md5
+  //获取缩略图
+  const thumFile = await getThumbnail(
+    file,
+    thumbnailWidth,
+    thumbnailHeight,
+    isWorker
+  );
+  //计算文件md5
   const md5 = fileMd5 || (await calculateMD5(file));
-  const src = URL.createObjectURL(file);
-  //计算缩略图md5
-  const thumFile = await getThumbnail(file, thumbnailWidth, thumbnailHeight);
-  const thumSrc = URL.createObjectURL(thumFile);
+  //计算图像的src
+  const src = isCreateURL ? URL.createObjectURL(file) : "";
+  const thumSrc = isCreateURL ? URL.createObjectURL(thumFile) : "";
   //构建缩略图对象
   const thumbnail = {
     file: thumFile,
@@ -361,4 +376,19 @@ export const file2FileType = async (
     md5,
     thumbnail,
   };
+};
+/**
+ * 为FileType对象创建URL
+ * @param fileType 可能未携带src或者src为空的FileType对象
+ * @returns 带有完整src的FileType对象
+ */
+export const createURL4FileType = (fileType: FileType): FileType => {
+  return produce<FileType>((draft) => {
+    if (!draft.src) {
+      draft.src = URL.createObjectURL(draft.file);
+    }
+    if (!draft.thumbnail.src) {
+      draft.thumbnail.src = URL.createObjectURL(draft.thumbnail.file);
+    }
+  })(fileType);
 };

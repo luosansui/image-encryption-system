@@ -8,6 +8,7 @@ import { FileType } from "@/components/Upload/type";
 import ImageCrop from "../ImageCrop";
 import { ReactComponent as SVG_plus } from "@/assets/svg/plus.svg";
 import { ReactComponent as SVG_delete } from "@/assets/svg/delete.svg";
+import { Thumbnail } from "../Thumbnail";
 
 const Upload: React.FC<{
   list?: FileType[];
@@ -40,7 +41,7 @@ const Upload: React.FC<{
     acceptedMD5s: string[]
   ): Promise<FileType | null>[] => {
     //限制并发数为3
-    const limit = pLimit(3);
+    const limit = pLimit(4);
     //记录当前文件的md5
     const fileHashSet = new Set<string>(files.map((file) => file.md5));
     //过滤重复文件
@@ -74,9 +75,9 @@ const Upload: React.FC<{
     //过滤重复文件
     const promiseFiles = filterDuplicateFiles(acceptedFiles, acceptedMD5s);
     //等待文件计算MD5完成
-    for (let i = 0; i < promiseFiles.length; i += 3) {
-      //每次处理3个
-      const result = await Promise.all(promiseFiles.slice(i, i + 3));
+    for (let i = 0; i < promiseFiles.length; i += 2) {
+      //每次处理2个
+      const result = await Promise.all(promiseFiles.slice(i, i + 2));
       //过滤掉重复文件
       const resultWithoutNull = result.filter(
         (item): item is FileType => item !== null
@@ -133,11 +134,7 @@ const Upload: React.FC<{
   /**
    * 打开图片裁剪模态框
    */
-  const handleOpenModal = (
-    event: React.MouseEvent<HTMLImageElement>,
-    image: FileType
-  ) => {
-    event.preventDefault();
+  const handleOpenModal = (image: FileType) => {
     setIsModalOpen(true);
     setEditImageFile(image);
   };
@@ -169,17 +166,7 @@ const Upload: React.FC<{
             key={file.md5}
             className="p-2 box-border relative w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-[12.5%]"
           >
-            <a
-              href={file.thumbnail.src}
-              download={`thumbnail-${file.thumbnail.file.name}`}
-              className="inline-block w-full"
-            >
-              <img
-                src={file.thumbnail.src}
-                onClick={(e) => handleOpenModal(e, file)}
-                className="w-full h-32 object-scale-down rounded border cursor-pointe bg-gray-100"
-              />
-            </a>
+            <Thumbnail file={file} onClick={() => handleOpenModal(file)} />
 
             <button
               className="text-black absolute top-0 right-0"

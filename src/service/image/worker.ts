@@ -1,6 +1,6 @@
 import { FileType } from "@/components/Upload/type";
 import {
-  calculateMD5,
+  file2FileType,
   file2PixelsBuffer,
   pixelsBuffer2File,
 } from "@/utils/file";
@@ -26,7 +26,7 @@ const handle = async (
   //转换为文件
   const file = await pixelsBuffer2File(resultBuffer, MIME, quality);
   //计算md5
-  const md5 = await calculateMD5(file);
+  const result = await file2FileType(file, null, false, true);
   /**
    * 严重注意事项：不能再worker进程中计算Blob URL
    * 则当worker进程结束时对应的内存会被释放
@@ -34,7 +34,7 @@ const handle = async (
    * 结束后渲染到页面上的图片会直接404
    */
   //已加密的文件
-  return { file, md5 };
+  return result;
 };
 //注册监听事件
 self.addEventListener(
