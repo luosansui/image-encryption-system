@@ -3,7 +3,7 @@ import { ControlOptionType } from "@/pages/encryption/ControlPanel/type";
 import PluginService from "@/service/plugin";
 import { Plugin } from "@/service/plugin/type";
 import { getThreadsNumber } from "@/utils";
-import { file2FileType } from "@/utils/file";
+import { createURL4FileType } from "@/utils/file";
 import WorkService from "../worker";
 import { encryptFuncType, PluginJson, progressStatus } from "./type";
 import WorkerThread from "./worker?worker";
@@ -99,7 +99,7 @@ class ImageService {
     //获取算法实例
     onprogress?.({
       done: false,
-      message: "正在获取算法实例",
+      message: "正在获取算法实例...",
       error: null,
     });
     const { pluginName, optionName, key, quality, format } = options;
@@ -110,28 +110,29 @@ class ImageService {
     //获取较优线程数，并实例化多线程服务
     onprogress?.({
       done: false,
-      message: "正在创建Web Worker线程",
+      message: "正在初始化多线程服务...",
       error: null,
     });
     const threadNum = getThreadsNumber(files.length);
     const workService = new WorkService(threadNum, exeFunc, WorkerThread);
-    onprogress?.({
-      done: false,
-      message: "正在执行图像处理",
-      error: null,
-    });
     //执行操作
     const result = files.map(async (origin): Promise<[FileType, FileType]> => {
       //获取文件类型
       const MIME = format || origin.file.type;
       //执行操作
-      const outputData = await workService.run<{ file: File; md5: string }>(
+      const outputData = await workService.run<FileType>(
         origin,
         key,
         MIME,
         quality
       );
-      const newFile = await file2FileType(outputData.file, outputData.md5);
+      //通知进度
+      onprogress?.({
+        done: false,
+        message: "正在执行图像处理...",
+        error: null,
+      });
+      const newFile = createURL4FileType(outputData);
       return [origin, newFile];
     });
     //监听result用于通知进度

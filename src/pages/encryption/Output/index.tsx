@@ -5,37 +5,8 @@ import { columns } from "./constant";
 import CustomModal from "@/components/CustomModal";
 import { getCompressionRate } from "@/utils/file";
 import { ReactComponent as SVG_delete } from "@/assets/svg/delete.svg";
-/**
- *
- * @param { src: string, name:string } 图片src
- * @returns 图像缩略图
- */
-const ImageWrapper = ({
-  file,
-  onClick,
-}: {
-  file: FileType;
-  onClick?: () => void;
-}) => {
-  //处理点击事件
-  const handleClick = (event: React.MouseEvent<HTMLImageElement>) => {
-    event.preventDefault();
-    onClick?.();
-  };
-  return (
-    <a
-      href={file.thumbnail.src}
-      download={`thumbnail-${file.thumbnail.file.name}`}
-      className="inline-block"
-    >
-      <img
-        src={file.thumbnail.src}
-        onClick={handleClick}
-        className="w-32 h-32 object-scale-down inline-block cursor-pointer bg-gray-100"
-      />
-    </a>
-  );
-};
+import { Thumbnail } from "@/components/Thumbnail";
+import saveAs from "file-saver";
 
 export default function Output({
   pairList,
@@ -75,19 +46,26 @@ export default function Output({
     onRemove?.(md5);
   };
   /**
+   * 下载图像
+   */
+  const handleDown = ({ file }: FileType) => {
+    saveAs(file, file.name);
+  };
+
+  /**
    * 生成表格数据
    */
   const generateData = () =>
     Array.from(pairList, ([originFile, encryptFile]) => ({
       id: originFile.md5,
       origin: (
-        <ImageWrapper
+        <Thumbnail
           file={originFile}
           onClick={() => handleOpenModal(originFile.src, originFile.file.name)}
         />
       ),
       current: (
-        <ImageWrapper
+        <Thumbnail
           file={encryptFile}
           onClick={() =>
             handleOpenModal(encryptFile.src, encryptFile.file.name)
@@ -96,12 +74,20 @@ export default function Output({
       ),
       compressionRatio: getCompressionRate(originFile.file, encryptFile.file),
       operate: (
-        <span
-          onClick={() => handleRemove(originFile.md5)}
-          className="cursor-pointer select-none text-red-400 font-semibold text-sm underline underline-offset-2"
-        >
-          删除
-        </span>
+        <div>
+          <span
+            onClick={() => handleDown(encryptFile)}
+            className="cursor-pointer select-none text-blue-500 font-semibold text-sm underline underline-offset-2 mx-2"
+          >
+            下载
+          </span>
+          <span
+            onClick={() => handleRemove(originFile.md5)}
+            className="cursor-pointer select-none text-red-500 font-semibold text-sm underline underline-offset-2 mx-2"
+          >
+            删除
+          </span>
+        </div>
       ),
     }));
 
