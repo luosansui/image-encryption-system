@@ -1,6 +1,7 @@
 import { PixelBuffer } from "@/service/image/type";
 
 type encryptFuncType = (data: PixelBuffer, key: string) => Promise<PixelBuffer>;
+type decryptFuncType = encryptFuncType;
 
 const encrypt: encryptFuncType = async (data, key) => {
   const { processImageByWebGL2 } = await import("@/utils/webgl");
@@ -52,7 +53,7 @@ const encrypt: encryptFuncType = async (data, key) => {
   // 返回输出数据
   return processImageByWebGL2(paddedData, fragmentShader, process);
 };
-const decrypt = async (data: PixelBuffer, key: string) => {
+const decrypt: decryptFuncType = async (data, key) => {
   const { processImageByWebGL2 } = await import("@/utils/webgl");
   const { restoreImageFromSquare } = await import("@/utils/file");
   // 片段着色器
