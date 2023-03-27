@@ -1,9 +1,8 @@
-import { calculateMD5, file2FileType, getThumbnail } from "@/utils/file";
-import React, { Fragment, useEffect, useRef, useState } from "react";
+import { calculateMD5, file2FileType } from "@/utils/file";
+import React, { Fragment, useEffect, useState } from "react";
 import Dropzone from "react-dropzone";
 import pLimit from "p-limit";
 import { produce } from "immer";
-import Pica from "pica";
 import { FileType } from "@/components/Upload/type";
 import ImageCrop from "../ImageCrop";
 import { ReactComponent as SVG_plus } from "@/assets/svg/plus.svg";
@@ -12,17 +11,17 @@ import { Thumbnail } from "../Thumbnail";
 
 const Upload: React.FC<{
   list?: FileType[];
+  disabled?: boolean;
+  className?: string;
   onAdd?: (files: FileType[], insertIndex: number) => void;
   onRemove?: (md5: string) => void;
-  className?: string;
-}> = ({ list, onAdd, onRemove, className }) => {
+  onUploadStateChange?: (status: boolean) => void;
+}> = ({ list, disabled, className, onAdd, onRemove, onUploadStateChange }) => {
   const [files, setFiles] = useState<FileType[]>(list || []);
   //打开图片裁剪模态框
   const [isModalOpen, setIsModalOpen] = useState(false);
   //要编辑的图片
   const [editImageFile, setEditImageFile] = useState<FileType | null>(null);
-  //是否正在上传
-  const [isUploading, setIsUploading] = useState(false);
   //当外部传入的list时，该组件为受控组件
   useEffect(() => {
     if (list !== undefined) {
@@ -59,12 +58,12 @@ const Upload: React.FC<{
   };
 
   const handleDrop = async (acceptedFiles: File[]) => {
-    if (isUploading) {
+    if (disabled) {
       return;
     }
-    setIsUploading(true);
+    onUploadStateChange?.(true);
     await handleAdd(acceptedFiles);
-    setIsUploading(false);
+    onUploadStateChange?.(false);
   };
 
   const handleAdd = async (
@@ -72,6 +71,9 @@ const Upload: React.FC<{
     acceptedMD5s: string[] = [],
     insertIndex = files.length
   ) => {
+    if (disabled) {
+      return;
+    }
     //过滤重复文件
     const promiseFiles = filterDuplicateFiles(acceptedFiles, acceptedMD5s);
     //等待文件计算MD5完成
@@ -100,6 +102,9 @@ const Upload: React.FC<{
   };
 
   const handleRemove = (md5: string) => {
+    if (disabled) {
+      return;
+    }
     //当外部没有传入的list时，该组件为非受控组件，直接更新状态
     if (list === undefined) {
       const fileIndex = files.findIndex((file) => file.md5 === md5);
@@ -135,6 +140,9 @@ const Upload: React.FC<{
    * 打开图片裁剪模态框
    */
   const handleOpenModal = (image: FileType) => {
+    if (disabled) {
+      return;
+    }
     setIsModalOpen(true);
     setEditImageFile(image);
   };
@@ -148,7 +156,7 @@ const Upload: React.FC<{
   return (
     <Fragment>
       <div className={`flex flex-wrap ${className ?? ""}`}>
-        <Dropzone onDrop={handleDrop} disabled={isUploading}>
+        <Dropzone onDrop={handleDrop} disabled={disabled}>
           {({ getRootProps, getInputProps }) => (
             <div className="sticky top-0 p-2 box-border w-1/3 lg:w-1/4 xl:w-1/5 2xl:w-[12.5%]">
               <div

@@ -26,6 +26,8 @@ export default function Encryption() {
   const [isEncrypting, setIsEncrypting] = useState(false);
   //是否正在导出
   const [isExporting, setIsExporting] = useState(false);
+  //是否正在上传
+  const [isUploading, setIsUploading] = useState(false);
   //描述过程信息
   const [processMessage, setProcessMessage] = useState("");
 
@@ -101,6 +103,12 @@ export default function Encryption() {
     }
     setFilePair([]);
     setProcessMessage("");
+  };
+  /**
+   * 上传状态改变
+   */
+  const handleUploadStateChange = (status: boolean) => {
+    setIsUploading(status);
   };
   /**
    * 初始化图片服务
@@ -201,8 +209,8 @@ export default function Encryption() {
 
   //是否正在执行某项操作
   const isOperating = useMemo(
-    () => isEncrypting || isExporting,
-    [isEncrypting, isExporting]
+    () => isEncrypting || isExporting || isUploading,
+    [isEncrypting, isExporting, isUploading]
   );
 
   // 进度条是否显示
@@ -219,6 +227,8 @@ export default function Encryption() {
             list={fileList}
             onAdd={handleFileListAdd}
             onRemove={handleFileListRemove}
+            disabled={isOperating}
+            onUploadStateChange={handleUploadStateChange}
           />
         </div>
       </div>
@@ -230,7 +240,7 @@ export default function Encryption() {
             onClearOutput={handleClearOutput}
             pluginList={pluginList}
             className="absolute w-full select-none"
-            disabled={isEncrypting}
+            disabled={isOperating}
           />
         </div>
       </div>
