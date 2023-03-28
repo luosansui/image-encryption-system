@@ -83,13 +83,12 @@ const TABLE_XNOR4RULE_1: {
  * @param rule 编码规则
  */
 export const byte2DNAByte = (byte: number, rule: RuleEnum) => {
-  const bit2s = [
-    (byte >> 6) & 0b00000011,
-    (byte >> 4) & 0b00000011,
-    (byte >> 2) & 0b00000011,
-    (byte >> 0) & 0b00000011,
-  ] as Bit2Byte;
-  return bit2s.map((bit) => dnaEncode(bit, rule)) as DNAByte;
+  return [
+    dnaEncode((byte >> 6) & 0b00000011, rule),
+    dnaEncode((byte >> 4) & 0b00000011, rule),
+    dnaEncode((byte >> 2) & 0b00000011, rule),
+    dnaEncode((byte >> 0) & 0b00000011, rule),
+  ] as DNAByte;
 };
 /**
  * 将DNA编码转为字节
@@ -97,8 +96,12 @@ export const byte2DNAByte = (byte: number, rule: RuleEnum) => {
  * @param rule 解码规则
  */
 export const dnaByte2Byte = (code: DNAByte, rule: RuleEnum) => {
-  const bit2s = code.map((base) => dnaDecode(base, rule)) as Bit2Byte;
-  return (bit2s[0] << 6) + (bit2s[1] << 4) + (bit2s[2] << 2) + (bit2s[3] << 0);
+  return (
+    (dnaDecode(code[0], rule) << 6) |
+    (dnaDecode(code[1], rule) << 4) |
+    (dnaDecode(code[2], rule) << 2) |
+    (dnaDecode(code[3], rule) << 0)
+  );
 };
 /**
  * DNA编码
