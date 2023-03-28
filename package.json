@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@types/crypto-js": "^4.1.1",
+    "crypto-js": "^4.1.1",
     "file-saver": "^2.0.5",
     "flowbite": "^1.6.3",
     "gl-matrix": "^3.4.3",

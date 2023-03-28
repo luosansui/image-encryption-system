@@ -30,6 +30,8 @@ export default function Encryption() {
   const [isUploading, setIsUploading] = useState(false);
   //描述过程信息
   const [processMessage, setProcessMessage] = useState("");
+  //进度条颜色
+  const [processColor, setProcessColor] = useState<"blue" | "red">("blue");
 
   /**
    * 新增上传文件
@@ -50,6 +52,7 @@ export default function Encryption() {
       return;
     }
     setProcessMessage("");
+    setProcessColor("blue");
     //删除生成列表中的文件
     const pair = filePair[pairIndex];
     if (pair) {
@@ -90,8 +93,8 @@ export default function Encryption() {
       URL.revokeObjectURL(file.thumbnail.src);
     }
     setFileList([]);
-    setFilePair([]);
-    setProcessMessage("");
+    //同时清空输出文件
+    handleClearOutput();
   };
   /**
    * 清空生成文件
@@ -103,6 +106,7 @@ export default function Encryption() {
     }
     setFilePair([]);
     setProcessMessage("");
+    setProcessColor("blue");
   };
   /**
    * 上传状态改变
@@ -146,12 +150,16 @@ export default function Encryption() {
     //开始加密
     setIsEncrypting(true);
     setFilePair([]);
+    setProcessColor("blue");
     try {
       //获取结果
       console.log("options", options);
       //处理过程信息
       const progress = (status: progressStatus) => {
         setProcessMessage(status.message);
+        if (status.done && status.error) {
+          setProcessColor("red");
+        }
       };
       const resList = imageService.current.processing(
         fileList,
@@ -160,6 +168,9 @@ export default function Encryption() {
       );
       //处理加密结果
       for await (const item of resList) {
+        if (!item) {
+          continue;
+        }
         setFilePair(
           produce((draft) => {
             draft.push(item);
@@ -259,6 +270,7 @@ export default function Encryption() {
               current={filePair.length}
               total={fileList.length}
               type="fraction"
+              color={processColor}
             />
           </div>
           <div

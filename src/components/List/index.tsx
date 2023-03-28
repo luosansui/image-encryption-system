@@ -26,7 +26,6 @@ const Select: React.FC<SelectProps> = ({
   //最大列表高度
   const [maxListHeight, setMaxListHeight] = useState(0);
   const ulRef = useRef<HTMLUListElement | null>(null);
-  const footerRef = useRef<HTMLDivElement | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
   /**
    * 选项点击事件
@@ -60,18 +59,13 @@ const Select: React.FC<SelectProps> = ({
   };
   //设置最大高度
   useEffect(() => {
-    if (isOpen && ulRef.current && footerRef.current) {
-      const { clientHeight } = ulRef.current;
-      //获取底部组件的高度
-      const footerHeight = footerRef.current.offsetHeight;
-      //获取ul上边距
-      const PaddingTop = parseFloat(
-        window.getComputedStyle(ulRef.current).getPropertyValue("padding-top")
-      );
-      //获取两个li的高度
-      const doubleListHeight = (clientHeight / options.length) * listNumber;
+    if (isOpen && ulRef.current) {
+      const liDom = ulRef.current.childNodes[0] as HTMLElement;
+      if (!liDom) {
+        setMaxListHeight(80);
+      }
       //计算最大高度
-      const maxDivHeight = doubleListHeight + PaddingTop + footerHeight;
+      const maxDivHeight = liDom.offsetHeight * listNumber + 10;
       //设置最大高度
       setMaxListHeight(maxDivHeight);
     }
@@ -109,11 +103,12 @@ const Select: React.FC<SelectProps> = ({
         </span>
       </button>
       {isOpen && (
-        <div
-          style={{ maxHeight: maxListHeight }}
-          className="absolute z-10 w-full mt-1 bg-white rounded-md border shadow-lg overflow-auto focus:outline-none sm:text-sm"
-        >
-          <ul ref={ulRef} className="pt-2">
+        <div className="absolute z-10 w-full mt-1 bg-white rounded-md border shadow-lg  focus:outline-none sm:text-sm">
+          <ul
+            ref={ulRef}
+            style={{ maxHeight: maxListHeight }}
+            className="overflow-auto"
+          >
             {options?.map((option, index) => (
               <li
                 key={index}
@@ -126,7 +121,7 @@ const Select: React.FC<SelectProps> = ({
               </li>
             ))}
           </ul>
-          <div ref={footerRef}>
+          <div>
             <FooterRender />
           </div>
         </div>
