@@ -1,7 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { produce } from "immer";
-import { saveAs } from "file-saver";
-import JSZip from "jszip";
 import ControlPanel from "@/pages/encryption/ControlPanel";
 import Upload from "@/components/Upload";
 import { FileType } from "@/components/Upload/type";
@@ -12,6 +10,8 @@ import ImageService from "@/service/image";
 import { Plugin } from "@/service/plugin/type";
 import { ReactComponent as SVG_download } from "@/assets/svg/download.svg";
 import { progressStatus } from "@/service/image/type";
+import saveAs from "file-saver";
+import { multipleFileDownload } from "@/utils/zip";
 
 export default function Encryption() {
   //文件列表
@@ -194,23 +194,8 @@ export default function Encryption() {
     setIsExporting(true);
 
     try {
-      //如果只有一张图片就不打包了
-      if (filePair.length === 1) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const [_, { file }] = filePair[0];
-        saveAs(file, file.name);
-      } else {
-        const zip = new JSZip();
-        //添加文件
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        for (const [_, { file }] of filePair) {
-          zip.file(file.name, file);
-        }
-        //获取结果
-        const content = await zip.generateAsync({ type: "blob" });
-        //保存文件
-        saveAs(content, "encrypted-images.zip");
-      }
+      const files = filePair.map(([, { file }]) => file);
+      await multipleFileDownload(files, "encrypted-images");
     } catch (error) {
       console.error(error);
     } finally {
@@ -257,7 +242,11 @@ export default function Encryption() {
       </div>
       <div className="flex flex-col col-span-2">
         <div className="flex-1 border-2 rounded-lg overflow-hidden">
-          <OutPut pairList={filePair} onRemove={handleFilePairRemove} />
+          <OutPut
+            pairList={filePair}
+            onRemove={handleFilePairRemove}
+            disabled={isOperating}
+          />
         </div>
         <div
           className={`mt-3 flex items-center ${isProgressShow ? "" : "hidden"}`}
