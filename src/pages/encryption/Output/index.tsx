@@ -11,10 +11,12 @@ import saveAs from "file-saver";
 export default function Output({
   pairList,
   className,
+  disabled,
   onRemove,
 }: {
   pairList: [FileType, FileType][];
   className?: string;
+  disabled?: boolean;
   onRemove?: (md5: string) => void;
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -43,12 +45,18 @@ export default function Output({
    * 删除图像
    */
   const handleRemove = (md5: string) => {
+    if (disabled) {
+      return;
+    }
     onRemove?.(md5);
   };
   /**
    * 下载图像
    */
   const handleDown = ({ file }: FileType) => {
+    if (disabled) {
+      return;
+    }
     saveAs(file, file.name);
   };
 

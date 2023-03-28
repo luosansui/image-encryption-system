@@ -40,7 +40,7 @@ const Upload: React.FC<{
     acceptedMD5s: string[]
   ): Promise<FileType | null>[] => {
     //限制并发数为3
-    const limit = pLimit(4);
+    const limit = pLimit(3);
     //记录当前文件的md5
     const fileHashSet = new Set<string>(files.map((file) => file.md5));
     //过滤重复文件
@@ -77,9 +77,9 @@ const Upload: React.FC<{
     //过滤重复文件
     const promiseFiles = filterDuplicateFiles(acceptedFiles, acceptedMD5s);
     //等待文件计算MD5完成
-    for (let i = 0; i < promiseFiles.length; i += 2) {
-      //每次处理2个
-      const result = await Promise.all(promiseFiles.slice(i, i + 2));
+    for (let i = 0; i < promiseFiles.length; i += 3) {
+      //每次处理3个
+      const result = await Promise.all(promiseFiles.slice(i, i + 3));
       //过滤掉重复文件
       const resultWithoutNull = result.filter(
         (item): item is FileType => item !== null
