@@ -12,10 +12,15 @@ const encrypt: encryptFuncType = async (
   // 初始化
   const pixels = new Uint8ClampedArray(buffer);
   const midPixels = new Uint8ClampedArray(pixels.length);
-  // logistic映射函数
-  const logistic = (x: number) => {
-    const mu = 3.999999999999999;
-    return mu * x * (1 - x);
+  // Tent映射函数
+  const tentMap = (x: number) => {
+    const r = 1.999999999999999;
+    if (x < 0.5) {
+      x = r * x;
+    } else {
+      x = r * (1 - x);
+    }
+    return x;
   };
 
   //派生密钥
@@ -27,7 +32,7 @@ const encrypt: encryptFuncType = async (
   let states = keys.map((key) => str2Num(key, true));
   //初始迭代1000次
   for (let i = 0; i < 1000; i++) {
-    states = states.map(logistic);
+    states = states.map(tentMap);
   }
 
   //使用混沌序列对图像进行加密
@@ -35,23 +40,23 @@ const encrypt: encryptFuncType = async (
     for (let j = 0; j < width; j++) {
       const index = (i * width + j) * 4;
       // 对像素进行异或, 不同的state迭代次数和不同通道的状态可以极大程度的去除图像三个通道的相关性
-      states = states.map(logistic);
+      states = states.map(tentMap);
       // 图像R值
-      states[0] = logistic(states[0]);
+      states[0] = tentMap(states[0]);
       midPixels[index] =
         pixels[index] ^
         Math.round(states[0] * 255) ^
         Math.round(states[1] * 255);
 
       // 图像G值
-      states[0] = logistic(states[0]);
+      states[0] = tentMap(states[0]);
       midPixels[index + 1] =
         pixels[index + 1] ^
         Math.round(states[0] * 255) ^
         Math.round(states[2] * 255);
 
       // 图像B值
-      states[0] = logistic(states[0]);
+      states[0] = tentMap(states[0]);
       midPixels[index + 2] =
         pixels[index + 2] ^
         Math.round(states[0] * 255) ^

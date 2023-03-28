@@ -50,9 +50,14 @@ self.addEventListener(
       cachedFunction = deserializeFunction(func);
     } else if (args) {
       // 执行缓存函数
-      const result = await handle(...args);
-      //发送数据
-      self.postMessage(result);
+      try {
+        const result = await handle(...args);
+        //发送数据
+        self.postMessage(result);
+      } catch (error) {
+        console.error("图像处理失败: ", error);
+        self.postMessage(null);
+      }
     }
   }
 );

@@ -116,41 +116,48 @@ class ImageService {
     const threadNum = getThreadsNumber(files.length);
     const workService = new WorkService(threadNum, exeFunc, WorkerThread);
     //执行操作
-    const result = files.map(async (origin): Promise<[FileType, FileType]> => {
-      //获取文件类型
-      const MIME = format || origin.file.type;
-      //执行操作
-      const outputData = await workService.run<FileType>(
-        origin,
-        key,
-        MIME,
-        quality
-      );
-      //通知进度
-      onprogress?.({
-        done: false,
-        message: "正在执行图像处理...",
-        error: null,
-      });
-      const newFile = createURL4FileType(outputData);
-      return [origin, newFile];
-    });
+    const result = files.map(
+      async (origin): Promise<[FileType, FileType] | null> => {
+        //通知进度
+        onprogress?.({
+          done: false,
+          message: "正在执行图像处理...",
+          error: null,
+        });
+        //获取文件类型
+        const MIME = format || origin.file.type;
+        //执行操作
+        const outputData = await workService.run<FileType>(
+          origin,
+          key,
+          MIME,
+          quality
+        );
+        if (!outputData) {
+          return null;
+        }
+        //通知进度
+        const newFile = createURL4FileType(outputData);
+        return [origin, newFile];
+      }
+    );
     //监听result用于通知进度
-    Promise.all(result)
-      .then(() => {
+    Promise.all(result).then((res) => {
+      const hasEmpty = res.some((item) => !item);
+      if (hasEmpty) {
+        onprogress?.({
+          done: true,
+          message: "部分图像处理失败",
+          error: new Error("部分图像处理失败"),
+        });
+      } else {
         onprogress?.({
           done: true,
           message: "图像处理完成",
           error: null,
         });
-      })
-      .catch((err) => {
-        onprogress?.({
-          done: true,
-          message: "部分图像处理失败",
-          error: err,
-        });
-      });
+      }
+    });
     return result;
   }
 }

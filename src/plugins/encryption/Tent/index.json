@@ -1,0 +1,11 @@
+{
+  "name": "混沌Tent加密算法",
+  "version": "1.0.0",
+  "description": "基于Tent映射对图像进行加密",
+  "language": "javascript",
+  "keyRule": {
+    "regex": "",
+    "required": true,
+    "message": ""
+  }
+}

@@ -12,21 +12,23 @@ export const capitalizeFirstLetter = (str: string) => {
   return str.trim().charAt(0).toUpperCase() + str.slice(1);
 };
 /**
- * 将string转变为md5的数值形式
+ * 将十六进制字符串转变为数值形式
  * @param str 密钥字符串
  * @param normalize 是否归一化
+ * @param md5 是否使用md5算法处理输入字符串
  * @param sliceLength 截取长度
  * @returns 数值
  */
-export const string2HashNumber = (
+export const str2Num = (
   str: string,
   normalize = false,
+  md5 = false,
   sliceLength = 13
 ): number => {
   // 截取长度
   const sliceLen = sliceLength > 13 ? 13 : sliceLength;
   // 使用SparkMD5算法对密钥进行哈希处理
-  const hash = SparkMD5.hash(str);
+  const hash = md5 ? SparkMD5.hash(str) : str;
   // 取哈希值前13位作为十六进制字符串
   const hex = hash.slice(0, sliceLen);
   // 将十六进制字符串转换为十进制数
