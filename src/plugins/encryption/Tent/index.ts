@@ -1,6 +1,11 @@
 import { PixelBuffer } from "@/service/image/type";
 
-type encryptFuncType = (data: PixelBuffer, key: string) => Promise<PixelBuffer>;
+type encryptFuncType = (
+  data: PixelBuffer,
+  key: string
+) => Promise<{
+  data: PixelBuffer;
+}>;
 type decryptFuncType = encryptFuncType;
 
 const encrypt: encryptFuncType = async (
@@ -68,10 +73,12 @@ const encrypt: encryptFuncType = async (
   }
   // 输出
   return {
-    name,
-    buffer: midPixels.buffer,
-    width,
-    height,
+    data: {
+      name,
+      buffer: midPixels.buffer,
+      width,
+      height,
+    },
   };
 };
 

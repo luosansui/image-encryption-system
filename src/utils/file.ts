@@ -70,6 +70,7 @@ export function calculateMD5(
 /**
  *
  * @param file 任意格式的图像文件
+ * @param quality 图像压缩质量，取值范围为0-1，默认不压缩
  * @returns 图像文件的ArrayBuffer像素数据
  */
 export async function file2PixelsBuffer(
@@ -107,7 +108,7 @@ export async function file2PixelsBuffer(
  */
 export async function pixelsBuffer2File(
   pixelBuffer: PixelBuffer,
-  type: string,
+  type = "image/png",
   quality = 1
 ): Promise<File> {
   const { buffer, width, height, name } = pixelBuffer;
@@ -151,7 +152,7 @@ export const file2Image = (file: File): Promise<HTMLImageElement> => {
  * @returns 压缩率
  */
 export const getCompressionRate = (origin: File, current: File) => {
-  return `${Math.round((current.size / origin.size) * 10000) / 100} %`;
+  return Math.round((current.size / origin.size) * 10000) / 100;
 };
 
 /**

@@ -1,6 +1,11 @@
 {
-  "name": "algorithm123",
+  "name": "LSB隐写",
   "version": "1.0.0",
-  "description": "algorithm123,用于图像隐写",
-  "language": "javascript"
+  "description": "基于最低有效位的图像隐写方法",
+  "language": "javascript",
+  "keyRule": {
+    "regex": "",
+    "required": true,
+    "message": ""
+  }
 }

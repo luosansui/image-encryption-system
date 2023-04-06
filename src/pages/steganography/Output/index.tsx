@@ -15,7 +15,7 @@ export default function Output({
   disabled,
   onRemove,
 }: {
-  pairList: [FileType, FileType][];
+  pairList: [FileType, FileType, string][];
   className?: string;
   disabled?: boolean;
   onRemove?: (md5: string) => void;
@@ -26,7 +26,7 @@ export default function Output({
     name: string;
   } | null>(null);
   /**
-   * 打开图片裁剪模态框
+   * 打开图片模态框
    */
   const handleOpenModal = (src: string, name: string) => {
     setIsModalOpen(true);
@@ -36,7 +36,7 @@ export default function Output({
     });
   };
   /**
-   * 关闭图片裁剪模态框
+   * 关闭图片模态框
    */
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -65,15 +65,9 @@ export default function Output({
    * 生成表格数据
    */
   const generateData = () =>
-    Array.from(pairList, ([originFile, encryptFile]) => {
+    Array.from(pairList, ([originFile, encryptFile, payload]) => {
       const id = originFile.md5;
-      const origin = (
-        <Thumbnail
-          file={originFile}
-          onClick={() => handleOpenModal(originFile.src, originFile.file.name)}
-        />
-      );
-      const current = (
+      const image = (
         <Thumbnail
           file={encryptFile}
           onClick={() =>
@@ -105,8 +99,7 @@ export default function Output({
       );
       return {
         id,
-        origin,
-        current,
+        image,
         originSize,
         currentSize,
         compressionRatio: (
@@ -117,6 +110,11 @@ export default function Output({
           >
             {compressionRatio}%
           </span>
+        ),
+        message: (
+          <div className="max-w-sm max-h-40 whitespace-normal break-words overflow-y-auto overflow-x-hidden">
+            {payload}
+          </div>
         ),
         operate,
       };

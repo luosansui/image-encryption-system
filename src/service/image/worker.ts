@@ -13,20 +13,28 @@ let cachedFunction: ((...args: any[]) => any) | null = null;
 const handle = async (
   origin: FileType,
   secretKey: string,
-  MIME: string,
-  quality: number
+  options: {
+    MIME?: string;
+    quality?: number;
+    target?: string;
+  } = {}
 ) => {
   //获取文件buffer
   const pixelBuffer = await file2PixelsBuffer(origin.file);
   //使用缓存函数处理
-  const resultBuffer: PixelBuffer = await cachedFunction!(
-    pixelBuffer,
-    secretKey
-  );
+  const resultData: {
+    data: PixelBuffer;
+    payload?: any;
+  } = await cachedFunction!(pixelBuffer, secretKey, options.target);
   //转换为文件
-  const file = await pixelsBuffer2File(resultBuffer, MIME, quality);
+  const file = await pixelsBuffer2File(
+    resultData.data,
+    options.MIME,
+    options.quality
+  );
   //计算md5
-  const result = await file2FileType(file, null, false, true);
+  const data = await file2FileType(file, null, false, true);
+  const payload = resultData.payload;
   /**
    * 严重注意事项：不能再worker进程中计算Blob URL
    * 则当worker进程结束时对应的内存会被释放
@@ -34,14 +42,17 @@ const handle = async (
    * 结束后渲染到页面上的图片会直接404
    */
   //已加密的文件
-  return result;
+  return {
+    data,
+    payload,
+  };
 };
 //注册监听事件
 self.addEventListener(
   "message",
   async (
     event: MessageEvent<{
-      args?: [FileType, string, string, number];
+      args?: [FileType, string, any];
       func?: ArrayBuffer;
     }>
   ) => {

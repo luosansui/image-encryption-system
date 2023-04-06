@@ -18,3 +18,25 @@ export const decimalToPercentage = (value: number): number => {
 export const twoThirds = (num: number): number => {
   return Math.floor((num * 2) / 3);
 };
+/**
+ * 将B转换为KB,MB,GB,TB,PB
+ * @param size 输入的大小
+ * @returns 返回转换后的大小
+ */
+const SIZE_POWER_MAP = {
+  B: 0,
+  KB: 1,
+  MB: 2,
+  GB: 3,
+  TB: 4,
+  PB: 5,
+  EB: 6,
+  ZB: 7,
+  YB: 8,
+};
+export const formatSize = (
+  size: number,
+  type: "KB" | "MB" | "GB" | "TB" | "PB" | "EB" | "ZB" | "YB"
+): string => {
+  return `${(size / Math.pow(1024, SIZE_POWER_MAP[type])).toFixed(1)} ${type}`;
+};
