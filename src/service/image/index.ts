@@ -1,5 +1,6 @@
 import { FileType } from "@/components/Upload/type";
-import { ControlOptionType } from "@/pages/encryption/ControlPanel/type";
+import { ControlOptionType as OptionEncryType } from "@/pages/encryption/ControlPanel/type";
+import { ControlOptionType as OptionStegaType } from "@/pages/steganography/ControlPanel/type";
 import PluginService from "@/service/plugin";
 import { Plugin } from "@/service/plugin/type";
 import { getThreadsNumber } from "@/utils";
@@ -15,8 +16,11 @@ class ImageService {
   /**
    * 初始化，不处理任何错误，直接抛出
    */
-  public async initService() {
-    const modules = import.meta.glob("@/plugins/encryption/**");
+  public async initService(module: "encryption" | "steganography") {
+    const modules =
+      module === "encryption"
+        ? import.meta.glob("@/plugins/encryption/**")
+        : import.meta.glob("@/plugins/steganography/**");
     const modulesKeySet = new Set(
       Object.keys(modules).map((key) => key.replace(/\.[^/.]+$/, ""))
     );
@@ -27,7 +31,7 @@ class ImageService {
         new Promise((res, rej) => {
           const load = async () => {
             const pluginJson = (await modules[`${key}.json`]()) as PluginJson;
-            return this.loadOtherPlugin({
+            return this.loadPlugin({
               ...pluginJson.default,
               path: key,
             });
@@ -40,9 +44,9 @@ class ImageService {
     return true;
   }
   /**
-   * 加载其他插件，不处理任何错误，直接抛出
+   * 加载插件，不处理任何错误，直接抛出
    */
-  public loadOtherPlugin(plugin: Plugin) {
+  public loadPlugin(plugin: Plugin) {
     if (!this.pluginService) {
       throw new Error("插件服务未初始化");
     }
@@ -93,7 +97,8 @@ class ImageService {
    */
   public processing(
     files: FileType[],
-    options: ControlOptionType,
+    options: OptionEncryType | OptionStegaType,
+    type: "encryption" | "steganography",
     onprogress: (status: progressStatus) => void
   ) {
     //获取算法实例
@@ -102,7 +107,7 @@ class ImageService {
       message: "正在获取算法实例...",
       error: null,
     });
-    const { pluginName, optionName, key, quality, format } = options;
+    const { pluginName, optionName, key } = options;
     const exeFunc = this.getInstance(pluginName)[optionName];
     if (files.length === 0) {
       return [];
@@ -117,28 +122,39 @@ class ImageService {
     const workService = new WorkService(threadNum, exeFunc, WorkerThread);
     //执行操作
     const result = files.map(
-      async (origin): Promise<[FileType, FileType] | null> => {
+      async (origin): Promise<[FileType, FileType, any] | null> => {
         //通知进度
         onprogress?.({
           done: false,
           message: "正在执行图像处理...",
           error: null,
         });
-        //获取文件类型
-        const MIME = format || origin.file.type;
         //执行操作
-        const outputData = await workService.run<FileType>(
-          origin,
-          key,
-          MIME,
-          quality
-        );
+        let args: any = {};
+        if (type === "encryption") {
+          const opts = options as OptionEncryType;
+          args = {
+            format: opts.format || origin.file.type,
+            quality: opts.quality || 1,
+          };
+        } else {
+          const opts = options as OptionStegaType;
+          args = {
+            target: opts.message,
+          };
+        }
+        //执行操作
+        const outputData = await workService.run<{
+          data: FileType;
+          payload?: any;
+        }>(origin, key, args);
+        //如果没有结果则返回null
         if (!outputData) {
           return null;
         }
         //通知进度
-        const newFile = createURL4FileType(outputData);
-        return [origin, newFile];
+        const newFile = createURL4FileType(outputData.data);
+        return [origin, newFile, outputData.payload];
       }
     );
     //监听result用于通知进度

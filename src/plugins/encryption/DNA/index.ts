@@ -1,7 +1,12 @@
 import { PixelBuffer } from "@/service/image/type";
 import { DNAByte } from "@/utils/dna";
 
-type encryptFuncType = (data: PixelBuffer, key: string) => Promise<PixelBuffer>;
+type encryptFuncType = (
+  data: PixelBuffer,
+  key: string
+) => Promise<{
+  data: PixelBuffer;
+}>;
 type decryptFuncType = encryptFuncType;
 type DNAByte3Channel = [DNAByte, DNAByte, DNAByte];
 /**
@@ -118,10 +123,12 @@ const encrypt: encryptFuncType = async (
   }
   // 输出
   return {
-    name,
-    buffer: midPixels.buffer,
-    width,
-    height,
+    data: {
+      name,
+      buffer: midPixels.buffer,
+      width,
+      height,
+    },
   };
 };
 /**
@@ -228,10 +235,12 @@ const decrypt: decryptFuncType = async (
   }
   // 输出
   return {
-    name,
-    buffer: midPixels.buffer,
-    width,
-    height,
+    data: {
+      name,
+      buffer: midPixels.buffer,
+      width,
+      height,
+    },
   };
 };
 

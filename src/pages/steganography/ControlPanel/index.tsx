@@ -1,10 +1,10 @@
-import React, { Fragment, useEffect, useMemo, useState } from "react";
+import React, { Fragment, useState } from "react";
 import { Plugin } from "@/service/plugin/type";
 import List from "@/components/List";
 import Button from "@/components/Button";
-import { IMAGE_FORMATS, OPTION_CARDS } from "./constant";
+import { OPTION_CARDS } from "./constant";
 import { capitalizeFirstLetter } from "@/utils/string";
-import { ControlOptionType, ImageFormatType } from "./type";
+import { ControlOptionType } from "./type";
 import CardSelect from "@/components/CardSelect";
 
 const Item = (props: {
@@ -48,19 +48,13 @@ export default function ControlPanel({
   //插件索引
   const [pluginIndex, setPluginIndex] = useState<number>(0);
   //选项卡名称
-  const [optionName, setOptionName] = useState<"encrypt" | "decrypt">(
-    "encrypt"
-  );
+  const [optionIndex, setOptionIndex] = useState<number>(0);
   //密钥
   const [key, setKey] = useState<string>("");
+  //写入的信息
+  const [message, setMessage] = useState<string>("");
   //密钥错误信息
   const [keyErrorMessage, setKeyErrorMessage] = useState<string>("");
-  //图像格式索引
-  const [formatIndex, setFormatIndex] = useState<number>(0);
-  //图片质量
-  const [quality, setQuality] = useState(100);
-  //是否禁用图像质量
-  const [isQualityDisabled, setIsQualityDisabled] = useState(false);
   /**
    * 校验输入密钥
    */
@@ -85,15 +79,15 @@ export default function ControlPanel({
   const handleStart = () => {
     //校验密钥
     const plugin = pluginList[pluginIndex];
+    const options: ["encrypt", "decrypt"] = ["encrypt", "decrypt"];
     if (!validateKey(key, plugin.keyRule)) {
       return;
     }
     onStart?.({
       pluginName: plugin.name,
-      optionName,
+      optionName: options[optionIndex],
       key,
-      format: IMAGE_FORMATS[formatIndex].value as ImageFormatType,
-      quality: quality / 100,
+      message: optionIndex ? "" : message,
     });
   };
 
@@ -110,25 +104,7 @@ export default function ControlPanel({
    * @param event 事件对象
    */
   const handleOptionChange = (value: number) => {
-    const options: ["encrypt", "decrypt"] = ["encrypt", "decrypt"];
-    setOptionName(options[value]);
-  };
-
-  /**
-   * 图像质量改变
-   * @param event 事件对象
-   */
-  const handleQualityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(event.target.value);
-    if (!isNaN(value) && value >= 0 && value <= 100) {
-      setQuality(value);
-    }
-  };
-  /**
-   * 图像格式改变
-   */
-  const handleImageFormatChange = (index: number) => {
-    setFormatIndex(index);
+    setOptionIndex(value);
   };
 
   /**
@@ -141,6 +117,9 @@ export default function ControlPanel({
     //校验密钥
     const plugin = pluginList[pluginIndex];
     validateKey(value, plugin?.keyRule);
+  };
+  const handleMessageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setMessage(event.target.value);
   };
   /**
    * 清空上传文件
@@ -180,40 +159,6 @@ export default function ControlPanel({
     );
   };
 
-  /**
-   * 渲染列表的底部
-   */
-  const renderPluginListFooter = () => {
-    return (
-      <button
-        className="w-full py-2 border-t-2 border-gray-100 text-blue-500"
-        //onClick={handleAddOption}
-      >
-        添加算法
-      </button>
-    );
-  };
-  //图像质量输入框是否禁用
-  useEffect(() => {
-    const format = IMAGE_FORMATS[formatIndex].value;
-    const disabledResult =
-      format !== "image/jpeg" && format !== "image/webp" && format !== "";
-    if (disabledResult) {
-      setQuality(100);
-    }
-    setIsQualityDisabled(disabledResult);
-  }, [formatIndex]);
-  //图像质量描述
-  const qualityLabel = useMemo(() => {
-    if (quality === 100) {
-      return "无损";
-    } else if (quality === 0) {
-      return "最低";
-    } else {
-      return `${quality}%`;
-    }
-  }, [quality]);
-
   return (
     <div className={`text-gray-600 p-3 ${className ?? ""}`}>
       {/* 算法列表 */}
@@ -247,36 +192,20 @@ export default function ControlPanel({
           } bg-gray-50 border flex-1 border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 py-2 px-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
         />
       </Item>
-
-      {/* 文件格式 */}
-      <Item label="文件格式">
-        <List
-          options={IMAGE_FORMATS}
-          checkedIndex={formatIndex}
-          disabled={disabled}
-          onChange={handleImageFormatChange}
-          renderSelected={(item) => item.label}
-          renderList={(list) => list.label}
-          className="flex-1"
-          listNumber={3}
-        ></List>
-      </Item>
-      {/* 图像质量 */}
-      <Item label="图像质量">
-        <input
-          type="range"
-          min="0"
-          max="100"
-          value={quality}
-          disabled={disabled || isQualityDisabled}
-          onChange={handleQualityChange}
-          className="w-72"
-        />
-        <span className="whitespace-nowrap text-sm ml-1 w-7 text-center">
-          {qualityLabel}
-        </span>
-      </Item>
-
+      {/* 要写入的信息 */}
+      {!!optionIndex || (
+        <Item label="载入信息">
+          <input
+            type="text"
+            value={message}
+            disabled={disabled}
+            onChange={handleMessageChange}
+            className={`${
+              disabled ? "!bg-gray-200" : ""
+            } bg-gray-50 border flex-1 border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 py-2 px-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
+          />
+        </Item>
+      )}
       <div className="text-center pt-2">
         <Button
           disabled={disabled}
@@ -295,7 +224,7 @@ export default function ControlPanel({
           清空输出
         </Button>
         <Button onClick={handleStart} disabled={disabled} className="mb-2">
-          开始{optionName === "encrypt" ? "加密" : "解密"}
+          开始{optionIndex ? "解密" : "加密"}
         </Button>
       </div>
     </div>

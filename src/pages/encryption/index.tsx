@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { produce } from "immer";
-import ControlPanel from "@/pages/encryption/ControlPanel";
+import ControlPanel from "./ControlPanel";
 import Upload from "@/components/Upload";
 import { FileType } from "@/components/Upload/type";
 import ProgressBar from "@/components/ProgressBar";
@@ -10,7 +10,6 @@ import ImageService from "@/service/image";
 import { Plugin } from "@/service/plugin/type";
 import { ReactComponent as SVG_download } from "@/assets/svg/download.svg";
 import { progressStatus } from "@/service/image/type";
-import saveAs from "file-saver";
 import { multipleFileDownload } from "@/utils/zip";
 
 export default function Encryption() {
@@ -120,7 +119,7 @@ export default function Encryption() {
   const initImageService = async () => {
     try {
       imageService.current = new ImageService();
-      await imageService.current.initService();
+      await imageService.current.initService("encryption");
       const plugins = imageService.current.getPlugins();
       console.log("plugins", plugins);
       if (plugins.length) {
@@ -164,6 +163,7 @@ export default function Encryption() {
       const resList = imageService.current.processing(
         fileList,
         options,
+        "encryption",
         progress
       );
       //处理加密结果
@@ -173,7 +173,7 @@ export default function Encryption() {
         }
         setFilePair(
           produce((draft) => {
-            draft.push(item);
+            draft.push([item[0], item[1]]);
           })
         );
       }
@@ -215,7 +215,7 @@ export default function Encryption() {
     [fileList.length, filePair.length, isEncrypting]
   );
   return (
-    <div className="h-full grid grid-rows-2 grid-cols-[minmax(300px,auto)_minmax(300px,400px)] gap-3">
+    <div className="h-full grid grid-rows-[55%_45%] grid-cols-[minmax(300px,auto)_minmax(300px,400px)] gap-3">
       <div className="border-2 border-gray-200 rounded-lg p-2">
         <div className="relative h-full w-full overflow-y-auto overflow-x-hidden">
           <Upload

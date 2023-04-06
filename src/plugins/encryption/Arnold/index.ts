@@ -1,6 +1,11 @@
 import { PixelBuffer } from "@/service/image/type";
 
-type encryptFuncType = (data: PixelBuffer, key: string) => Promise<PixelBuffer>;
+type encryptFuncType = (
+  data: PixelBuffer,
+  key: string
+) => Promise<{
+  data: PixelBuffer;
+}>;
 type decryptFuncType = encryptFuncType;
 
 const encrypt: encryptFuncType = async (data, key) => {
@@ -51,7 +56,9 @@ const encrypt: encryptFuncType = async (data, key) => {
   };
 
   // 返回输出数据
-  return processImageByWebGL2(paddedData, fragmentShader, process);
+  return {
+    data: processImageByWebGL2(paddedData, fragmentShader, process),
+  };
 };
 const decrypt: decryptFuncType = async (data, key) => {
   const { processImageByWebGL2 } = await import("@/utils/webgl");
@@ -98,7 +105,9 @@ const decrypt: decryptFuncType = async (data, key) => {
   // 进行Arnold变换
   const transformData = processImageByWebGL2(data, fragmentShader, process);
   //裁剪图像
-  return restoreImageFromSquare(transformData);
+  return {
+    data: restoreImageFromSquare(transformData),
+  };
 };
 
 export { encrypt, decrypt };

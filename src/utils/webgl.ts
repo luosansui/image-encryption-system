@@ -11,6 +11,9 @@ export const createWebGLContext = <T>(
   type: OffscreenRenderingContextId
 ): T => {
   const canvas = new OffscreenCanvas(width, height);
+  canvas.addEventListener("webglcontextlost", function (e) {
+    console.log(e, 111);
+  });
   const gl = canvas.getContext(type, {
     preserveDrawingBuffer: true, //阻止保留绘制缓冲区
   }) as T;
