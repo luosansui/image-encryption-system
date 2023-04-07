@@ -3,4 +3,5 @@ export interface ControlOptionType {
   optionName: "encrypt" | "decrypt";
   key: string;
   message: string | null;
+  repeat: number;
 }

@@ -53,6 +53,8 @@ export default function ControlPanel({
   const [key, setKey] = useState<string>("");
   //写入的信息
   const [message, setMessage] = useState<string>("");
+  //信息重复次数
+  const [repeatCount, setRepeatCount] = useState<number>(1);
   //密钥错误信息
   const [keyErrorMessage, setKeyErrorMessage] = useState<string>("");
   /**
@@ -88,6 +90,7 @@ export default function ControlPanel({
       optionName: options[optionIndex],
       key,
       message: optionIndex ? "" : message,
+      repeat: repeatCount,
     });
   };
 
@@ -120,6 +123,12 @@ export default function ControlPanel({
   };
   const handleMessageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setMessage(event.target.value);
+  };
+  const handleRepeatCountChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const value = Number(event.target.value);
+    setRepeatCount(Math.max(value, 1));
   };
   /**
    * 清空上传文件
@@ -185,8 +194,21 @@ export default function ControlPanel({
         <input
           type="text"
           value={key}
+          min={1}
           disabled={disabled}
           onChange={handleKeyChange}
+          className={`${
+            disabled ? "!bg-gray-200" : ""
+          } bg-gray-50 border flex-1 border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 py-2 px-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
+        />
+      </Item>
+      {/* 信息重复次数 */}
+      <Item label="信息重复">
+        <input
+          type="number"
+          value={repeatCount}
+          disabled={disabled}
+          onChange={handleRepeatCountChange}
           className={`${
             disabled ? "!bg-gray-200" : ""
           } bg-gray-50 border flex-1 border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 py-2 px-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}

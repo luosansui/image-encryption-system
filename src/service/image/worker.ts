@@ -14,24 +14,22 @@ const handle = async (
   origin: FileType,
   secretKey: string,
   options: {
-    MIME?: string;
+    format?: string;
     quality?: number;
-    target?: string;
+    message?: string;
+    repeat?: number;
   } = {}
 ) => {
   //获取文件buffer
   const pixelBuffer = await file2PixelsBuffer(origin.file);
+  const { format, quality, ...optionArgs } = options;
   //使用缓存函数处理
   const resultData: {
     data: PixelBuffer;
     payload?: any;
-  } = await cachedFunction!(pixelBuffer, secretKey, options.target);
+  } = await cachedFunction!(pixelBuffer, secretKey, optionArgs);
   //转换为文件
-  const file = await pixelsBuffer2File(
-    resultData.data,
-    options.MIME,
-    options.quality
-  );
+  const file = await pixelsBuffer2File(resultData.data, format, quality);
   //计算md5
   const data = await file2FileType(file, null, false, true);
   const payload = resultData.payload;

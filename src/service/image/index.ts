@@ -140,7 +140,8 @@ class ImageService {
         } else {
           const opts = options as OptionStegaType;
           args = {
-            target: opts.message,
+            message: opts.message,
+            repeat: opts.repeat,
           };
         }
         //执行操作
