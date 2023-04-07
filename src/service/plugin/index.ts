@@ -9,8 +9,7 @@ class PluginService {
       throw new Error(`Plugin ${plugin.name} has already been loaded`);
     }
 
-    const modulePath = plugin.path;
-    const module = await import(/* @vite-ignore */ modulePath);
+    const module = await plugin.path();
     //按合适的顺序插入插件
     const index = this.plugins.findIndex(
       (obj) => obj.name.localeCompare(plugin.name) > 0

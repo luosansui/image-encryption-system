@@ -19,11 +19,14 @@ class ImageService {
   public async initService(module: "encryption" | "steganography") {
     const modules =
       module === "encryption"
-        ? import.meta.glob("@/plugins/encryption/**/index.json")
-        : import.meta.glob("@/plugins/steganography/**/index.json");
-    const modulesKeySet = new Set(
-      Object.keys(modules).map((key) => key.replace(/\.[^/.]+$/, ""))
-    );
+        ? import.meta.glob("@/plugins/encryption/**")
+        : import.meta.glob("@/plugins/steganography/**");
+    const modulesKeySet = new Set<string>();
+    Object.keys(modules).forEach((key) => {
+      if (/index.json$/.test(key)) {
+        modulesKeySet.add(key.replace(/\.json$/, ""));
+      }
+    });
     //读取配置信息，载入插件
     const initResultPromise = Array.from(
       modulesKeySet,
@@ -32,9 +35,10 @@ class ImageService {
           console.log("key", key);
           const load = async () => {
             const pluginJson = (await modules[`${key}.json`]()) as PluginJson;
+            console.log("first", modules);
             return this.loadPlugin({
               ...pluginJson.default,
-              path: key,
+              path: modules[`${key}.js`] ?? modules[`${key}.ts`],
             });
           };
           load().then(res).catch(rej);
