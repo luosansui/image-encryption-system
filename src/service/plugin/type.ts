@@ -4,7 +4,7 @@ export type Plugin = {
   version: string;
   description: string;
   language: string;
-  path: string;
+  path: (...args: any[]) => any;
   keyRule: {
     regex: string;
     required: boolean;
