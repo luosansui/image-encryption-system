@@ -211,6 +211,6 @@ export const writeMsgToImage = async (
     width: pixelData.width,
     height: pixelData.height,
     name: pixelData.name,
-    buffer: resultBuffer!,
+    buffer: resultBuffer,
   };
 };

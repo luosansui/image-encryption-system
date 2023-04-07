@@ -10,11 +10,11 @@ export const columns: TableColumn[] = [
     key: "current",
   },
   {
-    title: "原图尺寸",
+    title: "原图大小",
     key: "originSize",
   },
   {
-    title: "生成图尺寸",
+    title: "生成图大小",
     key: "currentSize",
   },
   {

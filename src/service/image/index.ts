@@ -19,8 +19,8 @@ class ImageService {
   public async initService(module: "encryption" | "steganography") {
     const modules =
       module === "encryption"
-        ? import.meta.glob("@/plugins/encryption/**")
-        : import.meta.glob("@/plugins/steganography/**");
+        ? import.meta.glob("@/plugins/encryption/**/index.json")
+        : import.meta.glob("@/plugins/steganography/**/index.json");
     const modulesKeySet = new Set(
       Object.keys(modules).map((key) => key.replace(/\.[^/.]+$/, ""))
     );
@@ -29,6 +29,7 @@ class ImageService {
       modulesKeySet,
       (key) =>
         new Promise((res, rej) => {
+          console.log("key", key);
           const load = async () => {
             const pluginJson = (await modules[`${key}.json`]()) as PluginJson;
             return this.loadPlugin({
