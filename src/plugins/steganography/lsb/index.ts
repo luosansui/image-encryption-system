@@ -18,7 +18,7 @@ type decryptFuncType = (
 }>;
 //图像隐写
 const encrypt: encryptFuncType = async (data, key, { message, repeat }) => {
-  const { writeMsgToImage } = await import("@/utils/cryptostego");
+  const { writeMsgToImage } = await import("./lsb");
   //如果消息为空，则直接返回原图像
   if (!message?.trim()) {
     return {
@@ -33,7 +33,7 @@ const encrypt: encryptFuncType = async (data, key, { message, repeat }) => {
 };
 //图像提取
 const decrypt: decryptFuncType = async (data, key, { repeat }) => {
-  const { readMsgFromImage } = await import("@/utils/cryptostego");
+  const { readMsgFromImage } = await import("./lsb");
   const payload = readMsgFromImage(data, key, repeat);
   return {
     data,
