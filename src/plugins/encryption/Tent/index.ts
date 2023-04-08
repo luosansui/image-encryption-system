@@ -1,19 +1,15 @@
 import { PixelBuffer } from "@/service/image/type";
-
+import { PBKDF2 } from "crypto-js";
+import { str2Num } from "@/utils/string";
 type encryptFuncType = (
   data: PixelBuffer,
   key: string
-) => Promise<{
+) => {
   data: PixelBuffer;
-}>;
+};
 type decryptFuncType = encryptFuncType;
 
-const encrypt: encryptFuncType = async (
-  { buffer, width, height, name },
-  key
-) => {
-  const { PBKDF2 } = await import("crypto-js");
-  const { str2Num } = await import("@/utils/string");
+const encrypt: encryptFuncType = ({ buffer, width, height, name }, key) => {
   // 初始化
   const pixels = new Uint8ClampedArray(buffer);
   const midPixels = new Uint8ClampedArray(pixels.length);
@@ -82,8 +78,7 @@ const encrypt: encryptFuncType = async (
   };
 };
 
-const decrypt: decryptFuncType = async (data, key) => {
-  const { encrypt } = await import("./index");
+const decrypt: decryptFuncType = (data, key) => {
   // 解密与加密过程相同
   return encrypt(data, key);
 };

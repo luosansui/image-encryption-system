@@ -1,15 +1,15 @@
-import { Plugin, PluginModule } from "./type";
+import { ModuleFunc, Plugin } from "./type";
 
 class PluginService {
   private plugins: Plugin[] = [];
-  private loadedModules: Record<string, PluginModule> = {};
+  private loadedModules: Record<string, ModuleFunc> = {};
 
   public async loadPlugin(plugin: Plugin): Promise<boolean> {
     if (this.loadedModules[plugin.name]) {
       throw new Error(`Plugin ${plugin.name} has already been loaded`);
     }
 
-    const module = await plugin.path();
+    const moduleFunc = plugin.moduleFunc;
     //按合适的顺序插入插件
     const index = this.plugins.findIndex(
       (obj) => obj.name.localeCompare(plugin.name) > 0
@@ -19,7 +19,7 @@ class PluginService {
     } else {
       this.plugins.splice(index, 0, plugin);
     }
-    this.loadedModules[plugin.name] = module;
+    this.loadedModules[plugin.name] = moduleFunc;
     return true;
   }
 

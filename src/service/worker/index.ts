@@ -1,11 +1,12 @@
 import { serializeFunction } from "@/utils/function";
+import { ModuleFunc } from "../plugin/type";
 import { Task } from "./type";
 // ?worker仅适用于Chrome浏览器, 详情见: https://github.com/vitejs/vite/issues/8621
 import WorkerThread from "./worker?worker";
 export default class WorkService {
   private readonly maxWorkers: number; //最大worker数量
   private readonly Script: new () => Worker; //worker脚本
-  private exeFunc: ArrayBuffer; //worker执行函数
+  private moduleFuncBuffer: ArrayBuffer; //worker执行模块获取函数
   private workers: Worker[] = []; //worker列表
   private taskQueue: Task[] = []; //任务队列
   private availableWorker = 0; //可用worker数量
@@ -18,12 +19,12 @@ export default class WorkService {
   //构造函数
   constructor(
     maxWorkers: number,
-    exeFunc: (...args: any[]) => any,
+    moduleFunc: ModuleFunc,
     Script?: new () => Worker
   ) {
     this.maxWorkers = maxWorkers;
     this.Script = Script || WorkerThread;
-    this.exeFunc = serializeFunction(exeFunc);
+    this.moduleFuncBuffer = serializeFunction(moduleFunc);
   }
   /**
    * 执行任务
@@ -40,12 +41,12 @@ export default class WorkService {
   }
   /**
    * 设置worker的工作函数
-   * @param exeFunc 传入的函数
+   * @param moduleFunc 传入的函数
    */
-  public setExeFunc(exeFunc: (...args: any[]) => any) {
-    this.exeFunc = serializeFunction(exeFunc);
+  public setModuleFunc(moduleFunc: (...args: any[]) => any) {
+    this.moduleFuncBuffer = serializeFunction(moduleFunc);
     this.workers.forEach((worker) => {
-      worker.postMessage({ func: this.exeFunc });
+      worker.postMessage({ func: this.moduleFuncBuffer });
     });
   }
   /**
@@ -86,7 +87,7 @@ export default class WorkService {
       console.log("new Worker");
       worker = new this.Script();
       this.workers.push(worker);
-      worker.postMessage({ func: this.exeFunc! });
+      worker.postMessage({ func: this.moduleFuncBuffer });
     }
     //否则，并且如果worker已达到最大数量，判断是否有可用worker
     else if (this.availableWorker > 0) {
