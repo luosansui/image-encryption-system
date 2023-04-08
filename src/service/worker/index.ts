@@ -1,8 +1,6 @@
 import { serializeFunction } from "@/utils/function";
 import { ModuleFunc } from "../plugin/type";
 import { Task } from "./type";
-// ?worker仅适用于Chrome浏览器, 详情见: https://github.com/vitejs/vite/issues/8621
-import WorkerThread from "./worker?worker";
 export default class WorkService {
   private readonly maxWorkers: number; //最大worker数量
   private readonly Script: new () => Worker; //worker脚本
@@ -20,10 +18,10 @@ export default class WorkService {
   constructor(
     maxWorkers: number,
     moduleFunc: ModuleFunc,
-    Script?: new () => Worker
+    Script: new () => Worker
   ) {
     this.maxWorkers = maxWorkers;
-    this.Script = Script || WorkerThread;
+    this.Script = Script;
     this.moduleFuncBuffer = serializeFunction(moduleFunc);
   }
   /**

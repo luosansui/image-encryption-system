@@ -6,7 +6,7 @@ import {
 } from "@/utils/file";
 
 import { deserializeFunction } from "@/utils/function";
-import { ExecFuncType, PixelBuffer } from "./type";
+import { ExecFuncType } from "./type";
 //缓存函数;
 let cachedModule: any | null = null;
 
@@ -73,4 +73,3 @@ self.addEventListener(
     }
   }
 );
-export {};
