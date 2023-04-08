@@ -1,16 +1,16 @@
 import { PixelBuffer } from "@/service/image/type";
+import { processImageByWebGL2 } from "@/utils/webgl";
+import { padImageToSquare, restoreImageFromSquare } from "@/utils/file";
 
 type encryptFuncType = (
   data: PixelBuffer,
   key: string
-) => Promise<{
+) => {
   data: PixelBuffer;
-}>;
+};
 type decryptFuncType = encryptFuncType;
 
-const encrypt: encryptFuncType = async (data, key) => {
-  const { processImageByWebGL2 } = await import("@/utils/webgl");
-  const { padImageToSquare } = await import("@/utils/file");
+const encrypt: encryptFuncType = (data, key) => {
   // 将图像填充为正方形
   const paddedData = padImageToSquare(data);
   // 片段着色器
@@ -60,9 +60,7 @@ const encrypt: encryptFuncType = async (data, key) => {
     data: processImageByWebGL2(paddedData, fragmentShader, process),
   };
 };
-const decrypt: decryptFuncType = async (data, key) => {
-  const { processImageByWebGL2 } = await import("@/utils/webgl");
-  const { restoreImageFromSquare } = await import("@/utils/file");
+const decrypt: decryptFuncType = (data, key) => {
   // 片段着色器
   const fragmentShader = `#version 300 es
   precision highp float;

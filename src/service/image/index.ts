@@ -2,11 +2,11 @@ import { FileType } from "@/components/Upload/type";
 import { ControlOptionType as OptionEncryType } from "@/pages/encryption/ControlPanel/type";
 import { ControlOptionType as OptionStegaType } from "@/pages/steganography/ControlPanel/type";
 import PluginService from "@/service/plugin";
-import { Plugin } from "@/service/plugin/type";
+import { ModuleFunc, Plugin } from "@/service/plugin/type";
 import { getThreadsNumber } from "@/utils";
 import { createURL4FileType } from "@/utils/file";
 import WorkService from "../worker";
-import { encryptFuncType, PluginJson, progressStatus } from "./type";
+import { PluginJson, progressStatus } from "./type";
 import WorkerThread from "./worker?worker";
 /**
  * 图像服务
@@ -32,13 +32,12 @@ class ImageService {
       modulesKeySet,
       (key) =>
         new Promise((res, rej) => {
-          console.log("key", key);
           const load = async () => {
             const pluginJson = (await modules[`${key}.json`]()) as PluginJson;
-            console.log("first", modules);
+            const moduleFunc = modules[`${key}.js`] ?? modules[`${key}.ts`];
             return this.loadPlugin({
               ...pluginJson.default,
-              path: modules[`${key}.js`] ?? modules[`${key}.ts`],
+              moduleFunc,
             });
           };
           load().then(res).catch(rej);
@@ -80,17 +79,7 @@ class ImageService {
     if (!pluginName) {
       throw new Error("未选择插件");
     }
-    const { encrypt, decrypt } = this.pluginService.getPluginInstance<{
-      encrypt: encryptFuncType;
-      decrypt: encryptFuncType;
-    }>(pluginName);
-    if (!encrypt) {
-      throw new Error("插件未实现加密方法");
-    }
-    if (!decrypt) {
-      throw new Error("插件未实现解密方法");
-    }
-    return { encrypt, decrypt };
+    return this.pluginService.getPluginInstance<ModuleFunc>(pluginName);
   }
 
   /**
@@ -113,7 +102,7 @@ class ImageService {
       error: null,
     });
     const { pluginName, optionName, key } = options;
-    const exeFunc = this.getInstance(pluginName)[optionName];
+    const moduleFunc = this.getInstance(pluginName);
     if (files.length === 0) {
       return [];
     }
@@ -124,7 +113,7 @@ class ImageService {
       error: null,
     });
     const threadNum = getThreadsNumber(files.length);
-    const workService = new WorkService(threadNum, exeFunc, WorkerThread);
+    const workService = new WorkService(threadNum, moduleFunc, WorkerThread);
     //执行操作
     const result = files.map(
       async (origin): Promise<[FileType, FileType, any] | null> => {
@@ -153,7 +142,7 @@ class ImageService {
         const outputData = await workService.run<{
           data: FileType;
           payload?: any;
-        }>(origin, key, args);
+        }>(origin, key, optionName, args);
         //如果没有结果则返回null
         if (!outputData) {
           return null;

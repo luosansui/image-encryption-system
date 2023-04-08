@@ -1,12 +1,21 @@
 import { PixelBuffer } from "@/service/image/type";
 import { DNAByte } from "@/utils/dna";
+import { PBKDF2 } from "crypto-js";
+import { str2Num } from "@/utils/string";
+import {
+  dnaByte2Byte,
+  byte2DNAByte,
+  add4Rule1,
+  sub4Rule1,
+  xor4Rule1,
+} from "@/utils/dna";
 
 type encryptFuncType = (
   data: PixelBuffer,
   key: string
-) => Promise<{
+) => {
   data: PixelBuffer;
-}>;
+};
 type decryptFuncType = encryptFuncType;
 type DNAByte3Channel = [DNAByte, DNAByte, DNAByte];
 /**
@@ -15,14 +24,7 @@ type DNAByte3Channel = [DNAByte, DNAByte, DNAByte];
  * @param key 密钥
  * @returns 加密后的图像数据
  */
-const encrypt: encryptFuncType = async (
-  { buffer, width, height, name },
-  key
-) => {
-  const { PBKDF2 } = await import("crypto-js");
-  const { str2Num } = await import("@/utils/string");
-  const { dnaByte2Byte, byte2DNAByte, add4Rule1, sub4Rule1, xor4Rule1 } =
-    await import("@/utils/dna");
+const encrypt: encryptFuncType = ({ buffer, width, height, name }, key) => {
   // 初始化
   const pixels = new Uint8ClampedArray(buffer);
   const midPixels = new Uint8ClampedArray(pixels.length);
@@ -138,14 +140,7 @@ const encrypt: encryptFuncType = async (
  * @returns 解密后的图像数据
  */
 
-const decrypt: decryptFuncType = async (
-  { buffer, width, height, name },
-  key
-) => {
-  const { PBKDF2 } = await import("crypto-js");
-  const { str2Num } = await import("@/utils/string");
-  const { dnaByte2Byte, byte2DNAByte, add4Rule1, sub4Rule1, xor4Rule1 } =
-    await import("@/utils/dna");
+const decrypt: decryptFuncType = ({ buffer, width, height, name }, key) => {
   // 初始化
   const pixels = new Uint8ClampedArray(buffer);
   const midPixels = new Uint8ClampedArray(pixels.length);

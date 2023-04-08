@@ -193,12 +193,12 @@ export function readMsgFromImage(
  * @param num_copy 每个位要写入图像的副本数。较大的值具有更强的鲁棒性，但容量较小
  * @returns 处理后的图像数据
  */
-export const writeMsgToImage = async (
+export const writeMsgToImage = (
   pixelData: PixelBuffer,
   msg: string,
   enc_key: string,
   num_copy = 5
-): Promise<PixelBuffer> => {
+): PixelBuffer => {
   const imageBuffer = new Uint8ClampedArray(pixelData.buffer);
   //保存结果
   let resultBuffer = pixelData.buffer;

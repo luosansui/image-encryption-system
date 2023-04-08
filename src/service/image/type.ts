@@ -1,11 +1,4 @@
 import { Plugin } from "@/service/plugin/type";
-
-export type encryptFuncType = (
-  data: ArrayBuffer,
-  secretKey: string
-) => ArrayBuffer;
-export type decryptFuncType = encryptFuncType;
-
 export interface PixelBuffer {
   name: string;
   buffer: ArrayBuffer;
@@ -22,3 +15,14 @@ export interface progressStatus {
 export type PluginJson = Omit<Plugin, "path"> & {
   default: Omit<Plugin, "path">;
 };
+export type ExecFuncType = (
+  pixelBuffer: PixelBuffer,
+  secretKey: string,
+  optionArgs: {
+    message?: string | undefined;
+    repeat?: number | undefined;
+  }
+) => Promise<{
+  data: PixelBuffer;
+  payload?: any;
+}>;

@@ -6,13 +6,14 @@ import {
 } from "@/utils/file";
 
 import { deserializeFunction } from "@/utils/function";
-import { PixelBuffer } from "./type";
+import { ExecFuncType, PixelBuffer } from "./type";
 //缓存函数;
-let cachedFunction: ((...args: any[]) => any) | null = null;
+let cachedModule: any | null = null;
 
 const handle = async (
-  origin: FileType,
-  secretKey: string,
+  origin: FileType, //原始文件
+  secretKey: string, //密钥
+  funcName: string, //要执行的函数名称
   options: {
     format?: string;
     quality?: number;
@@ -24,10 +25,11 @@ const handle = async (
   const pixelBuffer = await file2PixelsBuffer(origin.file);
   const { format, quality, ...optionArgs } = options;
   //使用缓存函数处理
-  const resultData: {
-    data: PixelBuffer;
-    payload?: any;
-  } = await cachedFunction!(pixelBuffer, secretKey, optionArgs);
+  const execFunc: ExecFuncType = cachedModule[funcName];
+  if (typeof execFunc !== "function") {
+    throw new Error("未找到对应的处理函数: " + funcName);
+  }
+  const resultData = await execFunc(pixelBuffer, secretKey, optionArgs);
   //转换为文件
   const file = await pixelsBuffer2File(resultData.data, format, quality);
   //计算md5
@@ -50,13 +52,14 @@ self.addEventListener(
   "message",
   async (
     event: MessageEvent<{
-      args?: [FileType, string, any];
+      args?: [FileType, string, string, any];
       func?: ArrayBuffer;
     }>
   ) => {
     const { args, func } = event.data;
     if (func) {
-      cachedFunction = deserializeFunction(func);
+      //反序列化函数并获取模块
+      cachedModule = await deserializeFunction(func)();
     } else if (args) {
       // 执行缓存函数
       try {
