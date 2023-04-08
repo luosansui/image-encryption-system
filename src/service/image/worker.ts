@@ -4,9 +4,20 @@ import {
   file2PixelsBuffer,
   pixelsBuffer2File,
 } from "@/utils/file";
-
-import { deserializeFunction } from "@/utils/function";
 import { ExecFuncType } from "./type";
+//算法
+import * as encry_dna from "@/plugins/encryption/DNA";
+import * as encry_arnold from "@/plugins/encryption/Arnold";
+import * as encry_logistic from "@/plugins/encryption/Logistic";
+import * as encry_tent from "@/plugins/encryption/Tent";
+import * as stega_lsb from "@/plugins/steganography/LSB";
+const MODULE_MAP = {
+  encry_dna,
+  encry_arnold,
+  encry_logistic,
+  encry_tent,
+  stega_lsb,
+};
 //缓存函数;
 let cachedModule: any | null = null;
 
@@ -53,13 +64,18 @@ self.addEventListener(
   async (
     event: MessageEvent<{
       args?: [FileType, string, string, any];
-      func?: ArrayBuffer;
+      module?: string;
     }>
   ) => {
-    const { args, func } = event.data;
-    if (func) {
+    const { args, module } = event.data;
+    if (module) {
       //反序列化函数并获取模块
-      cachedModule = await deserializeFunction(func)();
+      try {
+        //获取函数字符串
+        cachedModule = MODULE_MAP[module as keyof typeof MODULE_MAP];
+      } catch (error) {
+        console.error("获取模块失败: ", error);
+      }
     } else if (args) {
       // 执行缓存函数
       try {
