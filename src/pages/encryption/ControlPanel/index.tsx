@@ -263,18 +263,20 @@ export default function ControlPanel({
       </Item>
       {/* 图像质量 */}
       <Item label="图像质量">
-        <input
-          type="range"
-          min="0"
-          max="100"
-          value={quality}
-          disabled={disabled || isQualityDisabled}
-          onChange={handleQualityChange}
-          className="w-72"
-        />
-        <span className="whitespace-nowrap text-sm ml-1 w-7 text-center">
-          {qualityLabel}
-        </span>
+        <div className="flex-1 relative">
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={quality}
+            disabled={disabled || isQualityDisabled}
+            onChange={handleQualityChange}
+            className="absolute w-[80%]"
+          />
+          <span className="whitespace-nowrap text-sm ml-1 w-[20%] text-center float-right">
+            {qualityLabel}
+          </span>
+        </div>
       </Item>
 
       <div className="text-center pt-2">
