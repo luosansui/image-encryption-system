@@ -1,10 +1,8 @@
-import { serializeFunction } from "@/utils/function";
-import { ModuleFunc } from "../plugin/type";
 import { Task } from "./type";
 export default class WorkService {
   private readonly maxWorkers: number; //最大worker数量
   private readonly Script: new () => Worker; //worker脚本
-  private moduleFuncBuffer: ArrayBuffer; //worker执行模块获取函数
+  private moduleName: string; //worker执行模块获取函数
   private workers: Worker[] = []; //worker列表
   private taskQueue: Task[] = []; //任务队列
   private availableWorker = 0; //可用worker数量
@@ -17,12 +15,12 @@ export default class WorkService {
   //构造函数
   constructor(
     maxWorkers: number,
-    moduleFunc: ModuleFunc,
+    moduleName: string,
     Script: new () => Worker
   ) {
     this.maxWorkers = maxWorkers;
     this.Script = Script;
-    this.moduleFuncBuffer = serializeFunction(moduleFunc);
+    this.moduleName = moduleName;
   }
   /**
    * 执行任务
@@ -41,10 +39,10 @@ export default class WorkService {
    * 设置worker的工作函数
    * @param moduleFunc 传入的函数
    */
-  public setModuleFunc(moduleFunc: (...args: any[]) => any) {
-    this.moduleFuncBuffer = serializeFunction(moduleFunc);
+  public setModule(name: string) {
+    this.moduleName = name;
     this.workers.forEach((worker) => {
-      worker.postMessage({ func: this.moduleFuncBuffer });
+      worker.postMessage({ module: this.moduleName });
     });
   }
   /**
@@ -85,7 +83,7 @@ export default class WorkService {
       console.log("new Worker");
       worker = new this.Script();
       this.workers.push(worker);
-      worker.postMessage({ func: this.moduleFuncBuffer });
+      worker.postMessage({ module: this.moduleName });
     }
     //否则，并且如果worker已达到最大数量，判断是否有可用worker
     else if (this.availableWorker > 0) {

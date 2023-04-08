@@ -1,5 +1,6 @@
 {
   "name": "LSB隐写",
+  "key": "stega_lsb",
   "version": "1.0.0",
   "description": "基于最低有效位的图像隐写方法",
   "language": "javascript",

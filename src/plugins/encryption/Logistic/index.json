@@ -1,5 +1,6 @@
 {
   "name": "混沌Logistic加密算法",
+  "key": "encry_logistic",
   "version": "1.0.0",
   "description": "基于混沌Logistic映射对图像进行加密",
   "language": "javascript",

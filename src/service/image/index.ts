@@ -2,7 +2,7 @@ import { FileType } from "@/components/Upload/type";
 import { ControlOptionType as OptionEncryType } from "@/pages/encryption/ControlPanel/type";
 import { ControlOptionType as OptionStegaType } from "@/pages/steganography/ControlPanel/type";
 import PluginService from "@/service/plugin";
-import { ModuleFunc, Plugin } from "@/service/plugin/type";
+import { Plugin } from "@/service/plugin/type";
 import { getThreadsNumber } from "@/utils";
 import { createURL4FileType } from "@/utils/file";
 import WorkService from "../worker";
@@ -22,6 +22,7 @@ class ImageService {
         ? import.meta.glob("@/plugins/encryption/**")
         : import.meta.glob("@/plugins/steganography/**");
     const modulesKeySet = new Set<string>();
+    //获取所有插件的配置文件
     Object.keys(modules).forEach((key) => {
       if (/index.json$/.test(key)) {
         modulesKeySet.add(key.replace(/\.json$/, ""));
@@ -34,11 +35,7 @@ class ImageService {
         new Promise((res, rej) => {
           const load = async () => {
             const pluginJson = (await modules[`${key}.json`]()) as PluginJson;
-            const moduleFunc = modules[`${key}.js`] ?? modules[`${key}.ts`];
-            return this.loadPlugin({
-              ...pluginJson.default,
-              moduleFunc,
-            });
+            return this.loadPlugin(pluginJson.default);
           };
           load().then(res).catch(rej);
         })
@@ -72,14 +69,14 @@ class ImageService {
    * @param pluginName 插件名称
    * @returns 插件实例
    */
-  private getInstance(pluginName: string) {
+  private getPlugin(pluginName: string) {
     if (!this.pluginService) {
       throw new Error("插件服务未初始化");
     }
     if (!pluginName) {
       throw new Error("未选择插件");
     }
-    return this.pluginService.getPluginInstance<ModuleFunc>(pluginName);
+    return this.pluginService.getPlugin<Plugin>(pluginName);
   }
 
   /**
@@ -102,7 +99,7 @@ class ImageService {
       error: null,
     });
     const { pluginName, optionName, key } = options;
-    const moduleFunc = this.getInstance(pluginName);
+    const { key: pluginKey } = this.getPlugin(pluginName);
     if (files.length === 0) {
       return [];
     }
@@ -113,7 +110,7 @@ class ImageService {
       error: null,
     });
     const threadNum = getThreadsNumber(files.length);
-    const workService = new WorkService(threadNum, moduleFunc, WorkerThread);
+    const workService = new WorkService(threadNum, pluginKey, WorkerThread);
     //执行操作
     const result = files.map(
       async (origin): Promise<[FileType, FileType, any] | null> => {

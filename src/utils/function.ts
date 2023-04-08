@@ -12,16 +12,12 @@ export const serializeFunction = (
   return funcData.buffer;
 };
 /**
- * 反序列化函数
+ * 反序列化函数, 但不支持import.meta
  * @param buffer ArrayBuffer
- * @returns 函数
+ * @returns 函数字符串
  */
-export const deserializeFunction = (
-  buffer: ArrayBuffer
-): ((...args: any[]) => any) => {
+export const deserializeFunction = (buffer: ArrayBuffer): string => {
   const data = new Uint8Array(buffer);
   const decoder = new TextDecoder("utf-8");
-  const funcString = decoder.decode(data);
-  const func = new Function(`return ${funcString}`)();
-  return func;
+  return decoder.decode(data);
 };

@@ -1,5 +1,6 @@
 {
   "name": "基于DNA编码的混沌加密算法",
+  "key": "encry_dna",
   "version": "1.0.0",
   "description": "基于DNA动态编码及混沌Logistic映射的加密算法",
   "language": "javascript",

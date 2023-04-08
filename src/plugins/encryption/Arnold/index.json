@@ -1,5 +1,6 @@
 {
   "name": "Arnold变换",
+  "key": "encry_arnold",
   "version": "1.0.0",
   "description": "基于Arnold变换, 对图像像素位置置乱, 加密结果是正方形",
   "language": "javascript",
