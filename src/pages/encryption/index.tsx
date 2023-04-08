@@ -215,63 +215,67 @@ export default function Encryption() {
     [fileList.length, filePair.length, isEncrypting]
   );
   return (
-    <div className="h-full grid grid-rows-[55%_45%] grid-cols-[minmax(300px,auto)_minmax(300px,400px)] gap-3">
-      <div className="border-2 border-gray-200 rounded-lg p-2">
-        <div className="relative h-full w-full overflow-y-auto overflow-x-hidden">
-          <Upload
-            className="absolute w-full select-none"
-            list={fileList}
-            onAdd={handleFileListAdd}
-            onRemove={handleFileListRemove}
-            disabled={isOperating}
-            onUploadStateChange={handleUploadStateChange}
-          />
+    <div className="w-full h-full overflow-auto">
+      <div className="h-full grid grid-rows-[55%_calc(45% - 0.75rem)] grid-cols-[minmax(300px,auto)_minmax(300px,400px)] gap-3">
+        <div className="border-2 border-gray-200 rounded-lg p-2">
+          <div className="relative h-full w-full overflow-y-auto overflow-x-hidden">
+            <Upload
+              className="absolute w-full select-none"
+              list={fileList}
+              onAdd={handleFileListAdd}
+              onRemove={handleFileListRemove}
+              disabled={isOperating}
+              onUploadStateChange={handleUploadStateChange}
+            />
+          </div>
         </div>
-      </div>
-      <div className="border-2 border-gray-200 rounded-lg p-2">
-        <div className="relative h-full w-full overflow-y-auto overflow-x-hidden">
-          <ControlPanel
-            onStart={handleStart}
-            onClearUpload={handleClearUpload}
-            onClearOutput={handleClearOutput}
-            pluginList={pluginList}
-            className="absolute w-full select-none"
-            disabled={isOperating}
-          />
+        <div className="border-2 border-gray-200 rounded-lg p-2">
+          <div className="relative h-full w-full overflow-y-auto overflow-x-hidden">
+            <ControlPanel
+              onStart={handleStart}
+              onClearUpload={handleClearUpload}
+              onClearOutput={handleClearOutput}
+              pluginList={pluginList}
+              className="absolute w-full select-none"
+              disabled={isOperating}
+            />
+          </div>
         </div>
-      </div>
-      <div className="flex flex-col col-span-2">
-        <div className="flex-1 border-2 rounded-lg overflow-hidden">
-          <OutPut
-            pairList={filePair}
-            onRemove={handleFilePairRemove}
-            disabled={isOperating}
-          />
-        </div>
-        <div
-          className={`mt-3 flex items-center ${isProgressShow ? "" : "hidden"}`}
-        >
-          <div className="p-2 border-2 border-gray-200 shadow-sm rounded-lg flex-1 relative">
-            <span className="absolute z-10 left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 select-none">
-              {processMessage}
-            </span>
-            <ProgressBar
-              current={filePair.length}
-              total={fileList.length}
-              type="fraction"
-              color={processColor}
+        <div className="flex flex-col col-span-2">
+          <div className="flex-1 border-2 rounded-lg overflow-hidden">
+            <OutPut
+              pairList={filePair}
+              onRemove={handleFilePairRemove}
+              disabled={isOperating}
             />
           </div>
           <div
-            onClick={handleDownload}
-            className={`p-2 border-2 border-gray-200 shadow-sm rounded-lg ml-2 hover:bg-gray-200 ${
-              isOperating ? "!bg-gray-100" : ""
+            className={`mt-3 flex items-center ${
+              isProgressShow ? "" : "hidden"
             }`}
           >
-            <SVG_download
-              fill={isOperating ? "#ccc" : "#000"}
-              className="w-4 h-4"
-            />
+            <div className="p-2 border-2 border-gray-200 shadow-sm rounded-lg flex-1 relative">
+              <span className="absolute z-10 left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 select-none">
+                {processMessage}
+              </span>
+              <ProgressBar
+                current={filePair.length}
+                total={fileList.length}
+                type="fraction"
+                color={processColor}
+              />
+            </div>
+            <div
+              onClick={handleDownload}
+              className={`p-2 border-2 border-gray-200 shadow-sm rounded-lg ml-2 hover:bg-gray-200 ${
+                isOperating ? "!bg-gray-100" : ""
+              }`}
+            >
+              <SVG_download
+                fill={isOperating ? "#ccc" : "#000"}
+                className="w-4 h-4"
+              />
+            </div>
           </div>
         </div>
       </div>
