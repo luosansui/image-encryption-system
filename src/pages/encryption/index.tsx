@@ -216,7 +216,7 @@ export default function Encryption() {
   );
   return (
     <div className="w-full h-full overflow-auto">
-      <div className="h-full grid grid-rows-[55%_calc(45% - 0.75rem)] grid-cols-[minmax(300px,auto)_minmax(300px,400px)] gap-3">
+      <div className="h-full grid grid-rows-[55%_calc(45%_-_0.75rem)] grid-cols-[minmax(300px,auto)_minmax(300px,400px)] gap-3">
         <div className="border-2 border-gray-200 rounded-lg p-2">
           <div className="relative h-full w-full overflow-y-auto overflow-x-hidden">
             <Upload
