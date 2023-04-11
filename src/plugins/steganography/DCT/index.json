@@ -1,8 +1,8 @@
 {
-  "name": "LSB隐写",
-  "key": "stega_lsb",
+  "name": "基于DCT变换的隐写术",
+  "key": "stega_dct",
   "version": "1.0.0",
-  "description": "基于最低有效位的图像隐写方法",
+  "description": "基于DCT变换的图像隐写方法",
   "language": "javascript",
   "keyRule": {
     "regex": "",
@@ -10,6 +10,6 @@
     "message": ""
   },
   "componentRule": {
-    "repeat": false
+    "repeat": true
   }
 }

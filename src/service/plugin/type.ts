@@ -10,4 +10,7 @@ export type Plugin = {
     required: boolean;
     message: string;
   };
+  componentRule?: {
+    [key: string]: boolean;
+  };
 };

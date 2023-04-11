@@ -11,12 +11,14 @@ import * as encry_arnold from "@/plugins/encryption/Arnold";
 import * as encry_logistic from "@/plugins/encryption/Logistic";
 import * as encry_tent from "@/plugins/encryption/Tent";
 import * as stega_lsb from "@/plugins/steganography/LSB";
+import * as stega_dct from "@/plugins/steganography/DCT";
 const MODULE_MAP = {
   encry_dna,
   encry_arnold,
   encry_logistic,
   encry_tent,
   stega_lsb,
+  stega_dct,
 };
 //缓存函数;
 let cachedModule: any | null = null;
