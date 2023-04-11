@@ -178,7 +178,7 @@ function get_bits_lsb(imageDataArray: Uint8ClampedArray) {
 export function readMsgFromImage(
   pixelData: PixelBuffer,
   enc_key: string,
-  num_copy = 5
+  num_copy = 1
 ) {
   const imageDataArray = new Uint8ClampedArray(pixelData.buffer);
   const tempBitsArray = get_bits_lsb(imageDataArray);
@@ -197,7 +197,7 @@ export const writeMsgToImage = (
   pixelData: PixelBuffer,
   msg: string,
   enc_key: string,
-  num_copy = 5
+  num_copy = 1
 ): PixelBuffer => {
   const imageBuffer = new Uint8ClampedArray(pixelData.buffer);
   //保存结果

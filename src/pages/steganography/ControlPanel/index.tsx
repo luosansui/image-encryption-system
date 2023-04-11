@@ -1,4 +1,4 @@
-import React, { Fragment, useState } from "react";
+import React, { Fragment, useMemo, useState } from "react";
 import { Plugin } from "@/service/plugin/type";
 import List from "@/components/List";
 import Button from "@/components/Button";
@@ -54,7 +54,7 @@ export default function ControlPanel({
   //写入的信息
   const [message, setMessage] = useState<string>("");
   //信息重复次数
-  const [repeatCount, setRepeatCount] = useState<number>(1);
+  const [repeatCount, setRepeatCount] = useState<string>("1");
   //密钥错误信息
   const [keyErrorMessage, setKeyErrorMessage] = useState<string>("");
   /**
@@ -85,12 +85,17 @@ export default function ControlPanel({
     if (!validateKey(key, plugin.keyRule)) {
       return;
     }
+    const repeat = Number(repeatCount);
+    //如果重复次数不是数字或者小于1，显示设置为1
+    if (!repeat) {
+      setRepeatCount("1");
+    }
     onStart?.({
       pluginName: plugin.name,
       optionName: options[optionIndex],
       key,
       message: optionIndex ? "" : message,
-      repeat: repeatCount,
+      repeat: repeat || 1,
     });
   };
 
@@ -127,8 +132,7 @@ export default function ControlPanel({
   const handleRepeatCountChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const value = Number(event.target.value);
-    setRepeatCount(Math.max(value, 1));
+    setRepeatCount(event.target.value.trim());
   };
   /**
    * 清空上传文件
@@ -167,6 +171,12 @@ export default function ControlPanel({
       </Fragment>
     );
   };
+  /**
+   * 计算当前插件的组件规则
+   */
+  const pluginComponentRule = useMemo(() => {
+    return pluginList[pluginIndex]?.componentRule ?? {};
+  }, [pluginIndex, pluginList]);
 
   return (
     <div className={`text-gray-600 p-3 ${className ?? ""}`}>
@@ -203,17 +213,19 @@ export default function ControlPanel({
         />
       </Item>
       {/* 信息重复次数 */}
-      <Item label="信息重复">
-        <input
-          type="number"
-          value={repeatCount}
-          disabled={disabled}
-          onChange={handleRepeatCountChange}
-          className={`${
-            disabled ? "!bg-gray-200" : ""
-          } bg-gray-50 border flex-1 border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 py-2 px-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
-        />
-      </Item>
+      {pluginComponentRule.repeat && (
+        <Item label="重复次数">
+          <input
+            type="number"
+            value={repeatCount}
+            disabled={disabled}
+            onChange={handleRepeatCountChange}
+            className={`${
+              disabled ? "!bg-gray-200" : ""
+            } bg-gray-50 border flex-1 border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 py-2 px-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
+          />
+        </Item>
+      )}
       {/* 要写入的信息 */}
       {!!optionIndex || (
         <Item label="载入信息">
@@ -246,7 +258,7 @@ export default function ControlPanel({
           清空输出
         </Button>
         <Button onClick={handleStart} disabled={disabled} className="mb-2">
-          开始{optionIndex ? "解密" : "加密"}
+          开始{optionIndex ? "写入" : "提取"}
         </Button>
       </div>
     </div>
