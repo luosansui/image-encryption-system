@@ -258,7 +258,7 @@ export default function ControlPanel({
           清空输出
         </Button>
         <Button onClick={handleStart} disabled={disabled} className="mb-2">
-          开始{optionIndex ? "写入" : "提取"}
+          开始{optionIndex ? "提取" : "写入"}
         </Button>
       </div>
     </div>
